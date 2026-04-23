@@ -273,12 +273,12 @@ textarea.field-input{resize:vertical;min-height:64px;}
 
 /* BRAND PANEL */
 .slide-brand{background:#FAFAF8;display:grid;grid-template-columns:440px 1fr 340px;height:100%;}
-.brand-col-left{padding:70px 52px;border-right:1px solid #E0DED6;display:flex;flex-direction:column;gap:0;overflow:hidden;}
-.brand-text-box{padding:24px 0;border-bottom:1px solid #ECEAE3;}
+.brand-col-left{padding:44px 52px;border-right:1px solid #E0DED6;display:flex;flex-direction:column;gap:0;overflow:hidden;justify-content:center;}
+.brand-text-box{padding:14px 0;border-bottom:1px solid #ECEAE3;}
 .brand-text-box:first-child{padding-top:0;}
 .brand-text-box:last-child{border-bottom:none;}
-.brand-block-label{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#0365f9;margin-bottom:8px;}
-.brand-block-value{font-size:17px;line-height:1.55;color:#2a2a28;font-weight:300;}
+.brand-block-label{font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:#0365f9;margin-bottom:8px;}
+.brand-block-value{font-size:15px;line-height:1.5;color:#2a2a28;font-weight:300;}
 .brand-col-center{padding:70px 52px;border-right:1px solid #E0DED6;display:flex;flex-direction:column;justify-content:center;gap:28px;}
 .brand-axis-title{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#0365f9;margin-bottom:12px;}
 .brand-axis{display:flex;flex-direction:column;gap:22px;}
@@ -484,6 +484,7 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-outline" style="color:#0A0A0A;border-color:#DDDCD5;" onclick="pmImportJSON()">↑ Importar .json</button>
+        <button class="btn btn-ghost" style="color:#0A0A0A;border-color:#DDDCD5;" onclick="pmNewProject()">+ Novo Projeto</button>
         <button class="btn btn-accent" onclick="pmSaveCurrent()">Salvar projeto atual</button>
       </div>
     </div>
@@ -540,16 +541,16 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
         <div class="brief-card-title">Posicionamento de Marca</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
           <div class="brief-field" style="margin-bottom:0">
-            <div class="brief-label">Persona</div>
-            <textarea class="brief-input" id="b_persona" placeholder="Quem é o público-alvo?"></textarea>
+            <div class="brief-label">Persona <span id="cnt_persona" style="float:right;font-size:10px;color:#9B9A94;">0/270</span></div>
+            <textarea class="brief-input" id="b_persona" placeholder="Quem é o público-alvo?" oninput="bUpdateCounter(this,'cnt_persona',350)"></textarea>
           </div>
           <div class="brief-field" style="margin-bottom:0">
-            <div class="brief-label">Propósito</div>
-            <textarea class="brief-input" id="b_purpose" placeholder="Para que a marca existe?"></textarea>
+            <div class="brief-label">Propósito <span id="cnt_purpose" style="float:right;font-size:10px;color:#9B9A94;">0/270</span></div>
+            <textarea class="brief-input" id="b_purpose" placeholder="Para que a marca existe?" oninput="bUpdateCounter(this,'cnt_purpose',350)"></textarea>
           </div>
           <div class="brief-field" style="margin-bottom:0">
-            <div class="brief-label">Negação</div>
-            <textarea class="brief-input" id="b_negation" placeholder="O que a marca não é?"></textarea>
+            <div class="brief-label">Negação <span id="cnt_negation" style="float:right;font-size:10px;color:#9B9A94;">0/270</span></div>
+            <textarea class="brief-input" id="b_negation" placeholder="O que a marca não é?" oninput="bUpdateCounter(this,'cnt_negation',350)"></textarea>
           </div>
         </div>
       </div>
@@ -1127,13 +1128,13 @@ function buildBrand(d) {
   const textBlocks = [
     {label:'Cliente', val: d.clientName || getClientName()},
     {label:'Segmento', val: d.segment},
-    {label:'Persona', val: d.persona},
-    {label:'Propósito', val: d.purpose},
-    {label:'Negação', val: d.negation},
+    {label:'Persona', val: (d.persona||'').slice(0,350)},
+    {label:'Propósito', val: (d.purpose||'').slice(0,350)},
+    {label:'Negação', val: (d.negation||'').slice(0,350)},
     ...(d.extra ? [{label:'Extra', val: d.extra}] : [])
   ].map(b => `<div class="brand-text-box">
     <div class="brand-block-label">${esc(b.label)}</div>
-    <div class="brand-block-value">${esc(b.val||'')}</div>
+    <div class="brand-block-value" style="white-space:pre-line;">${esc(b.val||'')}</div>
   </div>`).join('');
   return `<div class="slide slide-brand">
     <div class="brand-col-left">${textBlocks}</div>
@@ -1338,6 +1339,14 @@ function renderPanel(slide, idx) {
   attachListeners(slide, idx);
 }
 
+function fiLimited(label, id, val, max) {
+  const len = (val||'').length;
+  const over = len - max;
+  const color = over > 0 ? '#D45A3A' : '#9B9A94';
+  const counter = `<span style="font-size:10px;color:${color};float:right;">${over > 0 ? '+'+over+' caracteres' : len+'/350'}</span>`;
+  return `<div class="field"><label class="field-label">${label} ${counter}</label><textarea class="field-input" id="${id}" rows="3">${esc(val||'')}</textarea></div>`;
+}
+
 function fi(label, id, val, type='text', extra='') {
   if (type==='textarea') return `<div class="field"><label class="field-label">${label}</label><textarea class="field-input" id="${id}" ${extra}>${esc(val||'')}</textarea></div>`;
   if (type==='color') return `<div class="field"><label class="field-label">${label}</label><div style="display:flex;gap:6px;align-items:center;"><input type="color" id="${id}" value="${ea(val||'#000000')}" style="width:36px;height:28px;border:1px solid var(--g200);border-radius:var(--r);cursor:pointer;padding:2px;background:#F0EFE9;"><input type="text" id="${id}_txt" value="${ea(val||'#000000')}" class="field-input" style="flex:1;font-family:monospace;font-size:11px;" maxlength="7" placeholder="#000000"></div></div>`;
@@ -1414,9 +1423,9 @@ function pBrand(d, idx) {
     </div>
     ${fi('Segmento de Atuação','f_segment',d.segment)}
     <div class="field-section">Blocos de Texto</div>
-    ${fi('Persona','f_persona',d.persona,'textarea')}
-    ${fi('Propósito','f_purpose',d.purpose,'textarea')}
-    ${fi('Negação','f_negation',d.negation,'textarea')}
+    ${fiLimited('Persona','f_persona',d.persona,350)}
+    ${fiLimited('Propósito','f_purpose',d.purpose,350)}
+    ${fiLimited('Negação','f_negation',d.negation,350)}
     ${fi('Campo Extra (opcional)','f_extra',d.extra,'textarea')}
     <div class="field-section">Eixos Semânticos</div>
     ${axesHTML}
@@ -1639,6 +1648,22 @@ function attachListeners(slide, idx) {
       bindName('f_slideName', idx);
       bind('f_segment','segment');
       bind('f_persona','persona'); bind('f_purpose','purpose'); bind('f_negation','negation'); bind('f_extra','extra');
+    // Live char counters
+    ['f_persona','f_purpose','f_negation'].forEach(fid => {
+      const el = document.getElementById(fid);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        const label = el.closest('.field')?.querySelector('.field-label');
+        if (!label) return;
+        const len = el.value.length;
+        const over = len - 350;
+        const span = label.querySelector('span');
+        if (span) {
+          span.style.color = over > 0 ? '#D45A3A' : '#9B9A94';
+          span.textContent = over > 0 ? '+'+over+' caracteres' : len+'/350';
+        }
+      });
+    });
       document.getElementById('tagInput')?.addEventListener('keydown',e=>{ if(e.key==='Enter') addTag(idx); });
       break;
     case 'typography': bindName('f_slideName', idx); break;
@@ -2157,6 +2182,13 @@ function pmImportJSON() {
   document.getElementById('projectFile').click();
 }
 
+function pmNewProject() {
+  currentProjectId = null;
+  init();
+  switchTab('briefing');
+  showToast('Novo projeto criado!');
+}
+
 function flashSaved() {
   const el = document.getElementById('savedIndicator');
   if (!el) return;
@@ -2184,8 +2216,8 @@ function pmRender() {
     const project = clientSlide ? (clientSlide.data.projectName || '') : '';
     return `<div style="background:#FAFAF8;border:1px solid #DDDCD5;border-radius:6px;overflow:hidden;transition:box-shadow .15s;" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseleave="this.style.boxShadow='none'">
       <div style="background:#0A0A0A;padding:20px 20px 16px;cursor:pointer;" onclick="pmLoad('${p.id}')">
-        <div style="font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#666666;margin-bottom:8px;">${client || 'Cliente'}</div>
-        <div style="font-family:'Inter',sans-serif;font-weight:300;font-size:22px;color:#FAFAF8;line-height:1.1;margin-bottom:12px;">${esc(project || 'Sem nome')}</div>
+        <div style="font-family:'Inter',sans-serif;font-weight:600;font-size:22px;color:#ffffff;line-height:1.1;margin-bottom:6px;">${esc(client || 'Cliente')}</div>
+        <div style="font-family:'Inter',sans-serif;font-weight:300;font-size:14px;color:#888;line-height:1.3;margin-bottom:14px;">${esc(project || 'Sem nome')}</div>
         <div style="font-size:10px;color:#5A5955;">${slideCount} slides</div>
       </div>
       <div style="padding:12px 16px;border-top:1px solid #1e1e1e;background:#0f0f0f;display:flex;gap:6px;justify-content:flex-end;">
@@ -2387,7 +2419,21 @@ function bPopulate() {
 
 function bSet(id, val) {
   const el = document.getElementById(id);
-  if (el) el.value = val;
+  if (el) {
+    el.value = val;
+    // Refresh counter if exists
+    const counterMap = {'b_persona':'cnt_persona','b_purpose':'cnt_purpose','b_negation':'cnt_negation'};
+    if (counterMap[id]) bUpdateCounter(el, counterMap[id], 350);
+  }
+}
+
+function bUpdateCounter(textarea, counterId, max) {
+  const span = document.getElementById(counterId);
+  if (!span) return;
+  const len = textarea.value.length;
+  const over = len - max;
+  span.style.color = over > 0 ? '#D45A3A' : '#9B9A94';
+  span.textContent = over > 0 ? '+' + over + ' caracteres' : len + '/' + max;
 }
 
 // Push briefing field change TO all relevant slides
