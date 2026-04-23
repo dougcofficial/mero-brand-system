@@ -331,6 +331,15 @@ textarea.field-input{resize:vertical;min-height:64px;}
 /* SCROLLBAR */
 select.field-input{cursor:pointer;}
 
+/* TEXTSLIDE */
+.slide-textslide{background:#FAFAF8;display:grid;grid-template-columns:480px 1fr;height:100%;}
+.textslide-left{padding:100px 72px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid #E0DED6;}
+.textslide-title{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#0365f9;margin-bottom:24px;}
+.textslide-body{font-size:19px;line-height:1.65;color:#2a2a28;font-weight:300;}
+.textslide-right{overflow:hidden;position:relative;}
+.textslide-right img{width:100%;height:100%;object-fit:cover;}
+.textslide-right-empty{width:100%;height:100%;background:#E8E7E2;display:flex;align-items:center;justify-content:center;font-size:18px;color:#BBB;}
+
 /* Custom color picker */
 .color-pick-wrap{position:relative;width:32px;height:32px;flex-shrink:0;}
 .color-pick-swatch{width:32px;height:32px;border-radius:2px;border:1px solid rgba(0,0,0,.12);cursor:pointer;transition:transform .1s;}
@@ -587,6 +596,50 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
       </div>
     </div>
 
+    <!-- CONSTRUÇÃO DO SÍMBOLO -->
+    <div class="brief-full" style="margin-bottom:16px;">
+      <div class="brief-card">
+        <div class="brief-card-title">Construção do Símbolo</div>
+        <div class="brief-field">
+          <div class="brief-label">Texto de argumentação</div>
+          <textarea class="brief-input" id="b_symbolText" placeholder="Descreva o processo de construção do símbolo..." style="min-height:90px;"></textarea>
+        </div>
+        <div class="brief-label" style="margin-top:10px;margin-bottom:6px;">Imagens <span style="font-size:9px;color:#9B9A94;">· cada imagem = 1 slide</span></div>
+        <div class="img-slots-list" id="bSymbolImgList"></div>
+        <div class="image-upload-area" style="margin-top:8px;" onclick="bUploadTextslideImgs('symbol')">
+          <div class="upload-icon">📷</div><div class="upload-label">Adicionar imagens</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSTRUÇÃO DA TIPOGRAFIA -->
+    <div class="brief-full" style="margin-bottom:16px;">
+      <div class="brief-card">
+        <div class="brief-card-title">Construção da Tipografia</div>
+        <div class="brief-field">
+          <div class="brief-label">Texto de argumentação</div>
+          <textarea class="brief-input" id="b_typoText" placeholder="Descreva as escolhas tipográficas do projeto..." style="min-height:90px;"></textarea>
+        </div>
+        <div class="brief-label" style="margin-top:10px;margin-bottom:6px;">Imagens <span style="font-size:9px;color:#9B9A94;">· cada imagem = 1 slide</span></div>
+        <div class="img-slots-list" id="bTypoImgList"></div>
+        <div class="image-upload-area" style="margin-top:8px;" onclick="bUploadTextslideImgs('typo')">
+          <div class="upload-icon">📷</div><div class="upload-label">Adicionar imagens</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOCKUPS -->
+    <div class="brief-full" style="margin-bottom:40px;">
+      <div class="brief-card">
+        <div class="brief-card-title">Mockups de Aplicação</div>
+        <div class="brief-label" style="margin-bottom:6px;">Imagens <span style="font-size:9px;color:#9B9A94;">· cada imagem = 1 slide após "Aplicações"</span></div>
+        <div class="img-slots-list" id="bMockupImgList"></div>
+        <div class="image-upload-area" style="margin-top:8px;" onclick="bUploadMockups()">
+          <div class="upload-icon">📷</div><div class="upload-label">Adicionar mockups</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- BRIEFING SIDEBAR -->
@@ -758,6 +811,8 @@ const DEFAULTS = {
     ]
   }},
   images:{ type:'images', name:'Imagens', visible:true, data:{ layout:'1', images:[] }},
+  textslide:{ type:'textslide', name:'Slide de Texto', visible:true, data:{ title:'', body:'', layout:'1', images:[] }},
+  mockups:{ type:'mockups', name:'Mockups', visible:true, data:{ groups:[] }},
   final:{ type:'final', name:'Slide Final', visible:true, data:{ brandName:'Mero', contact:'Rua Duque de Caxias, 1170\nLajeado/RS\ncontato@mero.com.br\nwww.mero.com.br', bgColor:'#0365f9', textColor:'#ffffff' }}
 };
 
@@ -771,18 +826,19 @@ function init() {
     { ...dc(DEFAULTS.subcover), name:'Posicionamento', showInIndex:true, data:{...dc(DEFAULTS.subcover.data), sectionNum:'01', title:'Posicionamento', subtitle:'Estratégia e essência da marca'} },
     dc(DEFAULTS.brand),
     { ...dc(DEFAULTS.subcover), name:'Desenvolvimento', showInIndex:true, data:{...dc(DEFAULTS.subcover.data), sectionNum:'02', title:'Desenvolvimento', subtitle:'Processo criativo da Identidade Visual'} },
-    dc(DEFAULTS.images),
+    { ...dc(DEFAULTS.textslide), name:'Construção do Símbolo', data:{...dc(DEFAULTS.textslide.data), title:'Construção do Símbolo', body:'', layout:'1', images:[]} },
     { ...dc(DEFAULTS.subcover), name:'Tipografia', showInIndex:true, data:{...dc(DEFAULTS.subcover.data), sectionNum:'03', title:'Tipografia', subtitle:'Sistema tipográfico da marca'} },
     dc(DEFAULTS.typography),
-    { ...dc(DEFAULTS.subcover), name:'Cores', showInIndex:true, data:{...dc(DEFAULTS.subcover.data), sectionNum:'03', title:'Cores', subtitle:'Paleta cromática da marca'} },
+    { ...dc(DEFAULTS.textslide), name:'Construção da Tipografia', data:{...dc(DEFAULTS.textslide.data), title:'Construção da Tipografia', body:'', layout:'1', images:[]} },
+    { ...dc(DEFAULTS.subcover), name:'Cores', showInIndex:true, data:{...dc(DEFAULTS.subcover.data), sectionNum:'04', title:'Cores', subtitle:'Paleta cromática da marca'} },
     dc(DEFAULTS.colors),
-    { ...dc(DEFAULTS.subcover), name:'Aplicações', showInIndex:true, data:{...dc(DEFAULTS.subcover.data), sectionNum:'04', title:'Aplicações', subtitle:'Marca em uso'} },
-    dc(DEFAULTS.images),
+    { ...dc(DEFAULTS.subcover), name:'Aplicações', showInIndex:true, data:{...dc(DEFAULTS.subcover.data), sectionNum:'05', title:'Aplicações', subtitle:'Marca em uso'} },
+    dc(DEFAULTS.mockups),
     dc(DEFAULTS.final)
   ];
   recomputeSubcoverNumbers();
   renderThumbList();
-  selectSlide(0);
+  selectViewSlide(0);
   initSortable();
   // briefing init happens after DOM is ready
   setTimeout(() => { bPopulate(); bBindInputs(); bUpdateProgress(); pmRender(); }, 50);
@@ -863,48 +919,98 @@ function initSortable() {
 function renderThumbList() {
   const list = document.getElementById('slideThumbList');
   list.innerHTML = '';
-  slides.forEach((slide, i) => {
+  const vl = getViewList();
+  vl.forEach((entry, vi) => {
+    const { slide, slideIdx, groupIdx } = entry;
     const isAuto = slide.type === 'index';
-    const div = document.createElement('div');
+    const isMockupGroup = slide.type === 'mockups' && groupIdx >= 0;
     const isIndexSubcover = slide.type === 'subcover' && slide.showInIndex;
-    div.className = 'slide-thumb' + (i === activeIdx ? ' active' : '') + (!slide.visible ? ' hidden-slide' : '') + (isIndexSubcover ? ' subcover-index-thumb' : '');
-    div.onclick = () => selectSlide(i);
-    div.innerHTML = `
-      <span class="drag-handle" title="Arrastar">⠿</span>
-      <span class="slide-num">${i+1}</span>
-      <div class="slide-mini" style="background:${thumbBg(slide)};display:flex;align-items:center;justify-content:center;">
-        <span style="font-size:8px;color:rgba(255,255,255,.3);letter-spacing:.05em;">${slide.type.toUpperCase()}</span>
-      </div>
-      <div class="slide-thumb-info">
-        <div class="slide-thumb-name">${slide.name}${isAuto ? ' <span style="font-size:9px;color:#8A7A62">AUTO</span>' : ''}${slide.showInIndex ? ' <span style="font-size:8px;color:#C8B89A" title="No índice">◆</span>' : ''}</div>
-        <div class="slide-thumb-type">${slide.type}</div>
-      </div>
-      <div class="thumb-actions">
-        <button class="thumb-btn" onclick="event.stopPropagation();toggleVis(${i})" title="${slide.visible?'Ocultar':'Mostrar'}">${slide.visible?'●':'○'}</button>
-        <button class="thumb-btn" onclick="event.stopPropagation();dupSlide(${i})" title="Duplicar">⎘</button>
-        ${!isAuto ? `<button class="thumb-btn" onclick="event.stopPropagation();removeSlide(${i})" title="Remover" style="color:#D45A3A">×</button>` : ''}
-      </div>`;
+    const div = document.createElement('div');
+    div.className = 'slide-thumb' +
+      (vi === activeViewIdx ? ' active' : '') +
+      (!slide.visible ? ' hidden-slide' : '') +
+      (isIndexSubcover ? ' subcover-index-thumb' : '');
+    div.onclick = () => selectViewSlide(vi);
+    const name = isMockupGroup
+      ? slide.name + ' ' + (groupIdx + 1)
+      : slide.name;
+    const typeLabel = isMockupGroup ? 'mockup' : slide.type;
+    const layout = isMockupGroup ? (slide.data.groups[groupIdx]?.layout || '1') : '';
+    div.innerHTML =
+      '<span class="drag-handle" title="Arrastar">⠿</span>' +
+      '<span class="slide-num">' + (vi+1) + '</span>' +
+      '<div class="slide-mini" style="background:' + thumbBg(slide) + ';display:flex;align-items:center;justify-content:center;">' +
+        '<span style="font-size:8px;color:rgba(255,255,255,.3);letter-spacing:.05em;">' + typeLabel.toUpperCase() + '</span>' +
+      '</div>' +
+      '<div class="slide-thumb-info">' +
+        '<div class="slide-thumb-name">' + name +
+          (isAuto ? ' <span style="font-size:9px;color:#8A7A62">AUTO</span>' : '') +
+          (slide.showInIndex ? ' <span style="font-size:8px;color:#C8B89A" title="No índice">◆</span>' : '') +
+        '</div>' +
+        '<div class="slide-thumb-type">' + typeLabel + (layout ? ' · ' + layout + ' img' : '') + '</div>' +
+      '</div>' +
+      '<div class="thumb-actions">' +
+        (!isAuto && !isMockupGroup ? '<button class="thumb-btn" onclick="event.stopPropagation();toggleVis(' + slideIdx + ')" title="' + (slide.visible?'Ocultar':'Mostrar') + '">' + (slide.visible?'●':'○') + '</button>' : '') +
+        (!isAuto && !isMockupGroup ? '<button class="thumb-btn" onclick="event.stopPropagation();dupSlide(' + slideIdx + ')" title="Duplicar">⎘</button>' : '') +
+        (isMockupGroup ? '<button class="thumb-btn" onclick="event.stopPropagation();bRemoveMockupGroup(' + groupIdx + ')" title="Remover" style="color:#D45A3A">×</button>' :
+         !isAuto ? '<button class="thumb-btn" onclick="event.stopPropagation();removeSlide(' + slideIdx + ')" title="Remover" style="color:#D45A3A">×</button>' : '') +
+      '</div>';
     list.appendChild(div);
   });
 }
 
+function getViewList() {
+  const list = [];
+  slides.forEach((slide, i) => {
+    if (slide.type === 'mockups') {
+      const groups = slide.data.groups || [];
+      if (groups.length === 0) {
+        list.push({ slide, slideIdx: i, groupIdx: -1 });
+      } else {
+        groups.forEach((g, gi) => {
+          list.push({ slide, slideIdx: i, groupIdx: gi });
+        });
+      }
+    } else {
+      list.push({ slide, slideIdx: i, groupIdx: -1 });
+    }
+  });
+  return list;
+}
+
 function thumbBg(s) {
-  const m = {cover:'#0A0A0A',index:'#1a1a18',subcover:s.data?.bgColor||'#FAFAF8',brand:'#FAFAF8',typography:'#FAFAF8',colors:s.data?.bgColor||'#FAFAF8',images:'#CCCCCC',final:s.data?.bgColor||'#0A0A0A'};
+  const m = {cover:'#0A0A0A',index:'#1a1a18',subcover:s.data?.bgColor||'#FAFAF8',brand:'#FAFAF8',typography:'#000000',colors:s.data?.bgColor||'#FAFAF8',images:'#CCCCCC',textslide:'#FAFAF8',mockups:'#222222',final:s.data?.bgColor||'#0365f9'};
   return m[s.type]||'#EEE';
 }
 
 // ════════════════════════════════
 // SELECT & RENDER
 // ════════════════════════════════
-function selectSlide(i) {
-  if (i < 0 || i >= slides.length) i = 0;
-  activeIdx = i;
+function selectViewSlide(vi) {
+  const vl = getViewList();
+  if (vi < 0) vi = 0;
+  if (vi >= vl.length) vi = vl.length - 1;
+  activeViewIdx = vi;
+  const { slide, slideIdx, groupIdx } = vl[vi];
+  activeIdx = slideIdx;
   renderThumbList();
-  const slide = slides[i];
-  document.getElementById('toolbarTitle').textContent = slide.name;
-  document.getElementById('panelSubtitle').textContent = slide.name;
-  renderPreview(slide, i);
-  renderPanel(slide, i);
+  const name = slide.type === 'mockups' && groupIdx >= 0
+    ? slide.name + ' ' + (groupIdx + 1)
+    : slide.name;
+  document.getElementById('toolbarTitle').textContent = name;
+  document.getElementById('panelSubtitle').textContent = name;
+  // For mockup groups, set preview group before rendering
+  if (groupIdx >= 0) slide.data._previewGroup = groupIdx;
+  renderPreview(slide, slideIdx);
+  if (groupIdx >= 0) delete slide.data._previewGroup;
+  renderPanel(slide, slideIdx);
+}
+
+function selectSlide(i) {
+  // Find first viewList entry matching slideIdx
+  const vl = getViewList();
+  const vi = vl.findIndex(e => e.slideIdx === i);
+  selectViewSlide(vi >= 0 ? vi : 0);
 }
 
 function renderPreview(slide, idx) {
@@ -914,7 +1020,11 @@ function renderPreview(slide, idx) {
 
 function refreshPreview() {
   if (activeIdx < 0) return;
-  renderPreview(slides[activeIdx], activeIdx);
+  const vl = getViewList();
+  const entry = vl[activeViewIdx] || { slide: slides[activeIdx], slideIdx: activeIdx, groupIdx: -1 };
+  if (entry.groupIdx >= 0) entry.slide.data._previewGroup = entry.groupIdx;
+  renderPreview(entry.slide, entry.slideIdx);
+  if (entry.groupIdx >= 0) delete entry.slide.data._previewGroup;
   if (activeTab === 'briefing') { bUpdateProgress(); bRenderConnectedList(); }
 }
 
@@ -935,6 +1045,8 @@ function buildSlide(slide, idx) {
       case 'typography': return buildTypoSlide();
       case 'colors': return buildColors(slide.data);
       case 'images': return buildImages(slide.data);
+      case 'textslide': return buildTextslide(slide.data);
+      case 'mockups': return buildMockupSlide(slide.data, idx);
       case 'final': return buildFinal(slide.data);
       default: return '<div class="slide"></div>';
     }
@@ -1082,6 +1194,57 @@ function buildTypoSlide() {
 }
 
 
+function buildTextslide(d) {
+  const imgs = d.images || (d.image ? [d.image] : []);
+  const layout = d.layout || '1';
+  const n = parseInt(layout);
+  const slots = Array.from({length: n}, (_, i) => {
+    const img = imgs[i];
+    const src = img ? (img.src || img) : null;
+    return src
+      ? `<div style="${tsSlotStyle(layout,i,n)}overflow:hidden;"><img src="${src}" style="width:100%;height:100%;object-fit:cover;"></div>`
+      : `<div style="${tsSlotStyle(layout,i,n)}background:#E8E7E2;display:flex;align-items:center;justify-content:center;"><span style="color:#BBB;font-size:16px;">Imagem ${i+1}</span></div>`;
+  }).join('');
+  return `<div class="slide slide-textslide">
+    <div class="textslide-left">
+      <div class="textslide-title">${esc(d.title||'')}</div>
+      <div class="textslide-body">${esc(d.body||'').replace(/\n/g,'<br>')}</div>
+    </div>
+    <div class="textslide-right" style="display:flex;flex-wrap:wrap;">${slots}</div>
+  </div>`;
+}
+
+function tsSlotStyle(layout, i, n) {
+  switch(layout) {
+    case '1': return 'width:100%;height:100%;';
+    case '2': return 'width:50%;height:100%;';
+    case '3': return 'width:33.333%;height:100%;';
+    case '4': return 'width:50%;height:50%;';
+    case '6': return 'width:33.333%;height:50%;';
+    default:  return 'width:100%;height:100%;';
+  }
+}
+
+function buildMockupSlide(d, idx) {
+  const groups = d.groups || [];
+  if (groups.length === 0) {
+    return `<div class="slide" style="background:#F0EFE9;display:flex;align-items:center;justify-content:center;font-size:20px;color:#BBB;font-family:'Inter',sans-serif;">Adicione mockups no Briefing</div>`;
+  }
+  // Preview shows the first group; export handles all groups separately
+  const g = groups[d._previewGroup || 0] || groups[0];
+  const layout = g.layout || '1';
+  const imgs = g.images || [];
+  const n = parseInt(layout);
+  const slots = Array.from({length: n}, (_, i) => {
+    const img = imgs[i];
+    const src = img ? (img.src || img) : null;
+    return src
+      ? '<div style="' + tsSlotStyle(layout,i,n) + 'overflow:hidden;"><img src="' + src + '" style="width:100%;height:100%;object-fit:cover;"></div>'
+      : '<div style="' + tsSlotStyle(layout,i,n) + 'background:#222;"></div>';
+  }).join('');
+  return '<div class="slide" style="background:#000;display:flex;flex-wrap:wrap;overflow:hidden;">' + slots + '</div>';
+}
+
 function buildColors(d) {
   const bg = d.bgColor || '#FAFAF8';
   const isDark = isColorDark(bg);
@@ -1170,6 +1333,8 @@ function renderPanel(slide, idx) {
     case 'typography': body.innerHTML = pTypo(slide.data, idx); break;
     case 'colors': body.innerHTML = pColors(slide.data, idx); break;
     case 'images': body.innerHTML = pImages(slide.data, idx); break;
+    case 'textslide': body.innerHTML = pTextslide(slide.data, idx); break;
+    case 'mockups': body.innerHTML = pMockups(slide.data, idx); break;
     case 'final': body.innerHTML = pFinal(slide.data, idx); break;
     default: body.innerHTML = '<p style="color:#9B9A94;font-size:12px;">Sem propriedades.</p>';
   }
@@ -1361,6 +1526,50 @@ function pImages(d, idx) {
     </div>`;
 }
 
+function pTextslide(d, idx) {
+  const layout = d.layout || '1';
+  const n = parseInt(layout);
+  const imgs = d.images || [];
+  const layouts = [{val:'1',icon:'▬'},{val:'2',icon:'▌▐'},{val:'3',icon:'⫿'},{val:'4',icon:'▪▪'},{val:'6',icon:'⠿'}];
+  const lButtons = layouts.map(l => `<button class="layout-preset ${layout===l.val?'active':''} btn-sm" onclick="setTextslideLayout(${idx},'${l.val}')" style="padding:4px;font-size:9px;">${l.icon} ${l.val}</button>`).join('');
+  const imgSlots = Array.from({length:n},(_,j)=>{
+    const img = imgs[j]; const src = img?(img.src||img):null;
+    return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+      <div style="width:52px;height:30px;border-radius:2px;overflow:hidden;background:var(--g200);flex-shrink:0;">
+        ${src?`<img src="${src}" style="width:100%;height:100%;object-fit:cover;">`:''}</div>
+      <span style="font-size:11px;color:var(--g600);flex:1;">Slot ${j+1}</span>
+      <button class="img-slot-btn" onclick="uploadTextslideSlot(${idx},${j})">Trocar</button>
+    </div>`;
+  }).join('');
+  return `
+    ${fi('Nome do Slide','f_slideName',slides[idx].name)}
+    <div class="field-section">Texto</div>
+    ${fi('Título','f_ts_title',d.title)}
+    ${fi('Texto de Argumentação','f_ts_body',d.body,'textarea','rows="6"')}
+    <div class="field-section">Layout da área de imagens</div>
+    <div style="display:flex;gap:4px;margin-bottom:12px;">${lButtons}</div>
+    <div class="field-section">Imagens</div>
+    ${imgSlots}`;
+}
+
+function pMockups(d, idx) {
+  const groups = d.groups || [];
+  const summary = groups.length === 0
+    ? '<p style="color:var(--g400);font-size:12px;">Nenhum mockup. Adicione no Briefing.</p>'
+    : groups.map((g,i) => {
+        const n = parseInt(g.layout||'1');
+        const filled = (g.images||[]).filter(Boolean).length;
+        return '<div style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--g200);">' +
+          '<strong>Slide ' + (i+1) + '</strong> — layout ' + g.layout + ' imagem(ns) · ' +
+          filled + '/' + n + ' preenchidos</div>';
+      }).join('');
+  return `
+    ${fi('Nome do Slide','f_slideName',slides[idx].name)}
+    <div class="field-section">Slides de Mockup</div>
+    <div style="margin-bottom:10px;">${summary}</div>
+    <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="switchTab('briefing')">→ Gerenciar no Briefing</button>`;
+}
+
 function pFinal(d, idx) {
   return `
     ${fi('Nome do Slide','f_slideName',slides[idx].name)}
@@ -1437,6 +1646,20 @@ function attachListeners(slide, idx) {
       break;
     case 'typography': bindName('f_slideName', idx); break;
     case 'images': bindName('f_slideName', idx); break;
+    case 'mockups': bindName('f_slideName', idx); break;
+    case 'textslide':
+      bindName('f_slideName', idx);
+      bind('f_ts_title', 'title');
+      bind('f_ts_body', 'body');
+      // sync body to all slides of same name
+      (() => {
+        const el = document.getElementById('f_ts_body');
+        if (el) el.addEventListener('input', () => {
+          const name = slides[idx].name;
+          slides.filter(s => s.type==='textslide' && s.name===name).forEach(s => { s.data.body = el.value; });
+        });
+      })();
+      break;
     case 'colors': bindName('f_slideName', idx); bindColor('f_colorsBg','bgColor'); break;
     case 'final':
       bindName('f_slideName', idx);
@@ -1552,7 +1775,7 @@ function compressImage(dataUrl, callback) {
     const isTransparent = dataUrl.startsWith('data:image/png');
     const compressed = isTransparent
       ? canvas.toDataURL('image/png')
-      : canvas.toDataURL('image/jpeg', 0.92);
+      : canvas.toDataURL('image/jpeg', 0.96);
     callback(compressed);
   };
   img.src = dataUrl;
@@ -1701,6 +1924,74 @@ function resetFinalColors(idx) {
   slides[idx].data.textColor = '#ffffff';
   renderPanel(slides[idx], idx);
   refreshPreview();
+}
+function uploadTextslideImg(idx) {
+  const input = document.getElementById('imageFileInput');
+  input.onchange = e => {
+    const file = e.target.files[0]; if(!file) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      compressImage(ev.target.result, compressed => {
+        slides[idx].data.image = compressed;
+        renderPanel(slides[idx], idx); refreshPreview();
+      });
+    };
+    r.readAsDataURL(file); input.value = '';
+  };
+  input.click();
+}
+function clearTextslideImg(idx) {
+  slides[idx].data.image = null;
+  renderPanel(slides[idx], idx); refreshPreview();
+}
+function replaceMockup(slideIdx, imgIdx) {
+  const input = document.getElementById('imageFileInput');
+  input.onchange = e => {
+    const file = e.target.files[0]; if(!file) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      compressImage(ev.target.result, compressed => {
+        slides[slideIdx].data.images[imgIdx] = { src: compressed, x:0, y:0, scale:100 };
+        renderPanel(slides[slideIdx], slideIdx); refreshPreview();
+      });
+    };
+    r.readAsDataURL(file); input.value = '';
+  };
+  input.click();
+}
+function setTextslideLayout(idx, val) {
+  slides[idx].data.layout = val;
+  const n = parseInt(val);
+  if (!slides[idx].data.images) slides[idx].data.images = [];
+  while (slides[idx].data.images.length < n) slides[idx].data.images.push(null);
+  renderPanel(slides[idx], idx); refreshPreview();
+}
+function uploadTextslideSlot(idx, j) {
+  const input = document.getElementById('imageFileInput');
+  input.onchange = e => {
+    const file = e.target.files[0]; if(!file) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      compressImage(ev.target.result, compressed => {
+        if (!slides[idx].data.images) slides[idx].data.images = [];
+        slides[idx].data.images[j] = { src: compressed, x:0, y:0, scale:100 };
+        renderPanel(slides[idx], idx); refreshPreview();
+      });
+    };
+    r.readAsDataURL(file); input.value='';
+  };
+  input.click();
+}
+function setMockupLayout(idx, val) {
+  slides[idx].data.layout = val;
+  const n = parseInt(val);
+  if (!slides[idx].data.images) slides[idx].data.images = [];
+  while (slides[idx].data.images.length < n) slides[idx].data.images.push(null);
+  renderPanel(slides[idx], idx); refreshPreview();
+}
+function removeMockup(slideIdx, imgIdx) {
+  slides[slideIdx].data.images.splice(imgIdx, 1);
+  renderPanel(slides[slideIdx], slideIdx); refreshPreview();
 }
 function setLayout(idx,val) { slides[idx].data.layout=val; renderPanel(slides[idx],idx); refreshPreview(); }
 
@@ -1933,7 +2224,9 @@ function onLoadProject(e) {
       renderThumbList();
       selectSlide(0);
       setTimeout(() => { bPopulate(); bUpdateProgress(); }, 80);
+      // Save imported project to localStorage so it appears in project list
       currentProjectId = null;
+      pmSaveCurrent();
       showToast('Projeto importado!');
     } catch { showToast('Erro ao importar projeto.'); }
   };
@@ -1956,18 +2249,33 @@ async function exportPDF() {
   tmp.style.cssText='position:fixed;left:-9999px;top:0;width:1920px;height:1080px;overflow:hidden;z-index:-1;';
   document.body.appendChild(tmp);
   const styles = Array.from(document.querySelectorAll('style')).map(s=>s.outerHTML).join('');
-  for(let i=0;i<vis.length;i++) {
-    const sl=vis[i];
-    label.textContent=`Slide ${i+1} de ${vis.length} — ${sl.name}`;
-    fill.style.width=`${Math.round(i/vis.length*90)}%`;
+  // Expand mockup slide into one page per group
+  const exportItems = [];
+  vis.forEach(sl => {
+    if (sl.type === 'mockups') {
+      const groups = sl.data.groups || [];
+      if (groups.length === 0) exportItems.push({sl, groupIdx: -1});
+      else groups.forEach((_, gi) => exportItems.push({sl, groupIdx: gi}));
+    } else {
+      exportItems.push({sl, groupIdx: -1});
+    }
+  });
+
+  for(let i=0;i<exportItems.length;i++) {
+    const {sl, groupIdx} = exportItems[i];
+    label.textContent=`Slide ${i+1} de ${exportItems.length} — ${sl.name}`;
+    fill.style.width=`${Math.round(i/exportItems.length*90)}%`;
     const sIdx = slides.indexOf(sl);
+    // For mockup groups, temporarily set preview group index
+    if (groupIdx >= 0) sl.data._previewGroup = groupIdx;
     tmp.innerHTML=`${styles}<div style="width:1920px;height:1080px;overflow:hidden;">${buildSlide(sl,sIdx)}</div>`;
+    if (groupIdx >= 0) delete sl.data._previewGroup;
     await new Promise(r=>setTimeout(r,350));
     try{
-      const cv=await html2canvas(tmp,{width:1920,height:1080,scale:1,useCORS:true,allowTaint:true,backgroundColor:null,logging:false});
-      const img=cv.toDataURL('image/jpeg',.94);
+      const cv=await html2canvas(tmp,{width:1920,height:1080,scale:2,useCORS:true,allowTaint:true,backgroundColor:null,logging:false});
+      const imgData=cv.toDataURL('image/png');
       if(i>0)pdf.addPage([1920,1080],'landscape');
-      pdf.addImage(img,'JPEG',0,0,1920,1080);
+      pdf.addImage(imgData,'PNG',0,0,1920,1080);
     }catch(err){console.error(err);}
   }
   document.body.removeChild(tmp);
@@ -2012,8 +2320,8 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key==='s'){e.preventDefault();pmSaveCurrent();return;}
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
-  if(e.key==='ArrowDown'||e.key==='ArrowRight'){if(activeIdx<slides.length-1)selectSlide(activeIdx+1);}
-  if(e.key==='ArrowUp'||e.key==='ArrowLeft'){if(activeIdx>0)selectSlide(activeIdx-1);}
+  if(e.key==='ArrowDown'||e.key==='ArrowRight'){const vl=getViewList();if(activeViewIdx<vl.length-1)selectViewSlide(activeViewIdx+1);}
+  if(e.key==='ArrowUp'||e.key==='ArrowLeft'){if(activeViewIdx>0)selectViewSlide(activeViewIdx-1);}
   if((e.metaKey||e.ctrlKey)&&e.key==='+')adjustZoom(10);
   if((e.metaKey||e.ctrlKey)&&e.key==='-')adjustZoom(-10);
 });
@@ -2023,7 +2331,8 @@ document.addEventListener('keydown',e=>{
 // BRIEFING — Tab switch
 // ════════════════════════════════
 let activeTab = 'briefing';
-let currentProjectId = null; // tracks which saved project is open
+let currentProjectId = null;
+let activeViewIdx = 0; // index into getViewList() // tracks which saved project is open
 
 function switchTab(tab) {
   activeTab = tab;
@@ -2068,6 +2377,14 @@ function bPopulate() {
   bRenderFonts();
   bRenderColors();
   bRenderConnectedList();
+  // Textslide texts
+  const symbolSlides = slides.filter(s => s.type === 'textslide' && s.name === 'Construção do Símbolo');
+  const typoSlides2 = slides.filter(s => s.type === 'textslide' && s.name === 'Construção da Tipografia');
+  if (symbolSlides.length > 0) bSet('b_symbolText', symbolSlides[0].data.body || '');
+  if (typoSlides2.length > 0) bSet('b_typoText', typoSlides2[0].data.body || '');
+  bRenderTextslideImgList('symbol');
+  bRenderTextslideImgList('typo');
+  bRenderMockupList();
 }
 
 function bSet(id, val) {
@@ -2393,6 +2710,203 @@ function bRenderConnectedList() {
   }).join('');
 }
 
+
+// ════════════════════════════════
+// BRIEFING — Textslides (symbol + typo) and Mockups
+// ════════════════════════════════
+function bGetTextslides(kind) {
+  // kind: 'symbol' = Construção do Símbolo, 'typo' = Construção da Tipografia
+  const name = kind === 'symbol' ? 'Construção do Símbolo' : 'Construção da Tipografia';
+  return slides.filter(s => s.type === 'textslide' && s.name === name);
+}
+function bGetMockupSlide() { return slides.find(s => s.type === 'mockups'); }
+
+function bLayoutSelector(currentLayout, onchangeFn) {
+  const opts = [
+    {val:'1', label:'1 imagem', icon:'▬'},
+    {val:'2', label:'2 imagens', icon:'▌▐'},
+    {val:'3', label:'3 imagens', icon:'⫿'},
+    {val:'4', label:'4 (2×2)', icon:'▪▪'},
+    {val:'6', label:'6 (3×2)', icon:'⠿'},
+  ];
+  return `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:10px;">
+    ${opts.map(o => `<button class="layout-preset ${currentLayout===o.val?'active':''}" onclick="${onchangeFn}('${o.val}')" style="aspect-ratio:16/9;font-size:9px;flex-direction:column;gap:2px;">
+      <span>${o.icon}</span><span>${o.label}</span>
+    </button>`).join('')}
+  </div>`;
+}
+function bRenderTextslideImgList(kind) {
+  const listId = kind === 'symbol' ? 'bSymbolImgList' : 'bTypoImgList';
+  const list = document.getElementById(listId);
+  if (!list) return;
+  const tSlides = bGetTextslides(kind);
+  if (tSlides.length === 0) { list.innerHTML = ''; return; }
+  list.innerHTML = tSlides.map((s, i) => {
+    const sIdx = slides.indexOf(s);
+    const imgArr = s.data.images || [];
+    const img0 = imgArr[0];
+    const src0 = img0 ? (img0.src || img0) : null;
+    const thumb = src0 ? '<img src="' + src0 + '">' : '<div class="img-slot-thumb-empty">+</div>';
+    return '<div class="img-slot-row">' +
+      '<span class="img-slot-num">' + (i+1) + '</span>' +
+      '<div class="img-slot-thumb" style="cursor:default;">' + thumb + '</div>' +
+      '<div class="img-slot-info" style="font-size:10px;color:var(--g600);">Slide ' + (i+1) + '</div>' +
+      '<div class="img-slot-actions">' +
+        '<button class="img-slot-btn" onclick="bReplaceTextslideSlot(' + sIdx + ',0)">Trocar</button>' +
+        '<button class="img-slot-btn" onclick="bRemoveTextslide(\'' + kind + '\',' + i + ')" style="color:var(--danger)">×</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function bRenderMockupList() {
+  const list = document.getElementById('bMockupImgList');
+  if (!list) return;
+  const ms = bGetMockupSlide();
+  if (!ms) { list.innerHTML = ''; return; }
+  const groups = ms.data.groups || [];
+  const icons  = {'1':'▬','2':'▌▐','3':'⫿','4':'▪▪','6':'⠿'};
+  const labels = {'1':'1 img','2':'2 imgs','3':'3 imgs','4':'2×2','6':'3×2'};
+
+  const groupsHTML = groups.map((g, gi) => {
+    const layout = g.layout || '1';
+    const n = parseInt(layout);
+    const imgs = g.images || [];
+
+    const lBtns = ['1','2','3','4','6'].map(v =>
+      '<button class="layout-preset ' + (layout===v?'active':'') + '" ' +
+      'onclick="bSetMockupGroupLayout(' + gi + ',\'' + v + '\')" ' +
+      'style="flex:1;aspect-ratio:16/9;font-size:9px;flex-direction:column;gap:2px;">' +
+      '<span>' + icons[v] + '</span><span>' + labels[v] + '</span></button>'
+    ).join('');
+
+    const slots = Array.from({length: Math.max(n, imgs.filter(Boolean).length)}, (_, j) => {
+      const img = imgs[j];
+      const src = img ? (img.src || img) : null;
+      const thumb = src ? '<img src="' + src + '">' : '<div class="img-slot-thumb-empty">+</div>';
+      const removeBtn = src ? '<button class="img-slot-btn" onclick="bRemoveMockupSlot(' + gi + ',' + j + ')" style="color:var(--danger)">×</button>' : '';
+      return '<div class="img-slot-row">' +
+        '<span class="img-slot-num">' + (j+1) + '</span>' +
+        '<div class="img-slot-thumb" style="cursor:default;">' + thumb + '</div>' +
+        '<div class="img-slot-info" style="font-size:10px;color:var(--g600);">Slot ' + (j+1) + '</div>' +
+        '<div class="img-slot-actions">' +
+          '<button class="img-slot-btn" onclick="bReplaceMockupSlot(' + gi + ',' + j + ')">Trocar</button>' +
+          removeBtn +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    return '<div style="background:var(--g100);border:1px solid var(--g200);border-radius:var(--rmd);padding:10px;margin-bottom:8px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+        '<span style="font-size:10px;font-weight:600;color:var(--g400);">Slide ' + (gi+1) + '</span>' +
+        '<button class="img-slot-btn" onclick="bRemoveMockupGroup(' + gi + ')" style="color:var(--danger)">Remover slide</button>' +
+      '</div>' +
+      '<div style="display:flex;gap:4px;margin-bottom:8px;">' + lBtns + '</div>' +
+      slots +
+    '</div>';
+  }).join('');
+
+  list.innerHTML = groupsHTML;
+}
+
+function bAddMockupGroup() {
+  const ms = bGetMockupSlide(); if(!ms) return;
+  if (!ms.data.groups) ms.data.groups = [];
+  ms.data.groups.push({ layout:'1', images:[] });
+  bRenderMockupList();
+  renderThumbList();
+  refreshPreview();
+}
+
+function bSetMockupGroupLayout(gi, val) {
+  const ms = bGetMockupSlide(); if(!ms) return;
+  ms.data.groups[gi].layout = val;
+  bRenderMockupList();
+  renderThumbList();
+  refreshPreview();
+}
+
+function bReplaceMockupSlot(gi, j) {
+  const input = document.getElementById('imageFileInput');
+  input.onchange = e => {
+    const file = e.target.files[0]; if(!file) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      compressImage(ev.target.result, compressed => {
+        const ms = bGetMockupSlide(); if(!ms) return;
+        if (!ms.data.groups[gi].images) ms.data.groups[gi].images = [];
+        ms.data.groups[gi].images[j] = { src: compressed, x:0, y:0, scale:100 };
+        bRenderMockupList(); refreshPreview();
+      });
+    };
+    r.readAsDataURL(file); input.value = '';
+  };
+  input.click();
+}
+
+function bRemoveMockupSlot(gi, j) {
+  const ms = bGetMockupSlide(); if(!ms) return;
+  ms.data.groups[gi].images[j] = null;
+  bRenderMockupList(); refreshPreview();
+}
+
+function bRemoveMockupGroup(gi) {
+  const ms = bGetMockupSlide(); if(!ms) return;
+  ms.data.groups.splice(gi, 1);
+  bRenderMockupList();
+  renderThumbList();
+  refreshPreview();
+}
+
+function bUploadMockups() { bAddMockupGroup(); }
+function bSetMockupLayout(val) {}
+function bReplaceMockupImg(i) {}
+function bRemoveMockupImg(i) {}
+
+function bSetTextslideLayout(sIdx, val, kind) {
+  slides[sIdx].data.layout = val;
+  // Resize images array to match new layout count
+  const n = parseInt(val);
+  if (!slides[sIdx].data.images) slides[sIdx].data.images = [];
+  while (slides[sIdx].data.images.length < n) slides[sIdx].data.images.push(null);
+  bRenderTextslideImgList(kind);
+  refreshPreview();
+}
+
+function bSetMockupLayout(val) {
+  const ms = bGetMockupSlide(); if(!ms) return;
+  ms.data.layout = val;
+  if (!ms.data.images) ms.data.images = [];
+  bRenderMockupList();
+  refreshPreview();
+}
+
+function bReplaceTextslideSlot(sIdx, j) {
+  const input = document.getElementById('imageFileInput');
+  input.onchange = e => {
+    const file = e.target.files[0]; if(!file) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      compressImage(ev.target.result, compressed => {
+        if (!slides[sIdx].data.images) slides[sIdx].data.images = [];
+        slides[sIdx].data.images[j] = { src: compressed, x:0, y:0, scale:100 };
+        const kind = slides[sIdx].name === 'Construção do Símbolo' ? 'symbol' : 'typo';
+        bRenderTextslideImgList(kind);
+        refreshPreview();
+      });
+    };
+    r.readAsDataURL(file); input.value = '';
+  };
+  input.click();
+}
+
+function bClearTextslideSlot(sIdx, j) {
+  if (slides[sIdx].data.images) slides[sIdx].data.images[j] = null;
+  const kind = slides[sIdx].name === 'Construção do Símbolo' ? 'symbol' : 'typo';
+  bRenderTextslideImgList(kind);
+  refreshPreview();
+}
+
 // ════════════════════════════════
 // BRIEFING — Bind all inputs
 // ════════════════════════════════
@@ -2410,6 +2924,17 @@ function bBindInputs() {
   });
   const tagInput = document.getElementById('bTagInput');
   if (tagInput) tagInput.addEventListener('keydown', e => { if(e.key==='Enter') bAddTag(); });
+  // Textslide body sync
+  const bindTextslideBody = (id, kind) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      slides.filter(s => s.type === 'textslide' && s.name === (kind === 'symbol' ? 'Construção do Símbolo' : 'Construção da Tipografia'))
+            .forEach(s => { s.data.body = el.value; });
+    });
+  };
+  bindTextslideBody('b_symbolText', 'symbol');
+  bindTextslideBody('b_typoText', 'typo');
 }
 
 init();
