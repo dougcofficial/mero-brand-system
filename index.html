@@ -607,9 +607,7 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
         </div>
         <div class="brief-label" style="margin-top:10px;margin-bottom:6px;">Imagens <span style="font-size:9px;color:#9B9A94;">· cada imagem = 1 slide</span></div>
         <div class="img-slots-list" id="bSymbolImgList"></div>
-        <div class="image-upload-area" style="margin-top:8px;" onclick="bUploadTextslideImgs('symbol')">
-          <div class="upload-icon">📷</div><div class="upload-label">Adicionar imagens</div>
-        </div>
+
       </div>
     </div>
 
@@ -623,9 +621,7 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
         </div>
         <div class="brief-label" style="margin-top:10px;margin-bottom:6px;">Imagens <span style="font-size:9px;color:#9B9A94;">· cada imagem = 1 slide</span></div>
         <div class="img-slots-list" id="bTypoImgList"></div>
-        <div class="image-upload-area" style="margin-top:8px;" onclick="bUploadTextslideImgs('typo')">
-          <div class="upload-icon">📷</div><div class="upload-label">Adicionar imagens</div>
-        </div>
+
       </div>
     </div>
 
@@ -2346,6 +2342,7 @@ function switchTab(tab) {
   document.getElementById('tabSlides').classList.toggle('active', tab === 'slides');
   if (tab === 'briefing') { bPopulate(); bUpdateProgress(); }
   if (tab === 'projects') { pmRender(); }
+  if (tab === 'slides') { requestAnimationFrame(() => { requestAnimationFrame(fitZoom); }); }
 }
 
 // ════════════════════════════════
