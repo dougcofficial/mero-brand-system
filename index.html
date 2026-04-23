@@ -2273,9 +2273,8 @@ async function exportPDF() {
     if (groupIdx >= 0) delete sl.data._previewGroup;
     await new Promise(r=>setTimeout(r,350));
     try{
-      const cv=await html2canvas(tmp,{width:1920,height:1080,scale:1,useCORS:true,allowTaint:true,backgroundColor:null,logging:false});
-      // Use JPEG for all slides — visually lossless at 0.95, ~20x smaller than PNG
-      const imgData=cv.toDataURL('image/jpeg',0.95);
+      const cv=await html2canvas(tmp,{width:1920,height:1080,scale:1.5,useCORS:true,allowTaint:true,backgroundColor:null,logging:false});
+      const imgData=cv.toDataURL('image/jpeg',0.92);
       if(i>0)pdf.addPage([1920,1080],'landscape');
       pdf.addImage(imgData,'JPEG',0,0,1920,1080);
     }catch(err){console.error(err);}
