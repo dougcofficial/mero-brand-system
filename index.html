@@ -1409,7 +1409,7 @@ function pBrand(d, idx) {
         <input class="axis-label-input" placeholder="Topo" value="${ea(ax.top)}" onchange="updateAxis(${idx},${ai},'top',this.value)">
         <input class="axis-label-input" placeholder="Base" value="${ea(ax.bottom)}" onchange="updateAxis(${idx},${ai},'bottom',this.value)">
       </div>
-      <input type="range" class="axis-slider" min="0" max="100" value="${ax.value}" oninput="updateAxisVal(${idx},${ai},this.value)">
+      <input type="range" class="axis-slider" min="0" max="100" value="${ax.value}" step="10" oninput="updateAxisVal(${idx},${ai},this.value)">
       <div class="axis-val" id="axv_${ai}">${ax.value}%</div>
     </div>`).join('');
   const tagsHTML = (d.tags||[]).map((t,ti) => `
@@ -2478,7 +2478,7 @@ function bRenderAxes() {
     <div class="baxis-row" id="bax_${i}">
       <input class="brief-input" style="padding:7px 9px;font-size:12px;" placeholder="Polo A" value="${ea(ax.top)}" oninput="bUpdateAxis(${i},'top',this.value)">
       <div style="display:flex;flex-direction:column;gap:2px;align-items:center;">
-        <input type="range" min="0" max="100" value="${ax.value}" step="1" oninput="bUpdateAxis(${i},'value',this.value);this.nextElementSibling.textContent=this.value+'%'">
+        <input type="range" min="0" max="100" value="${ax.value}" step="10" oninput="bUpdateAxis(${i},'value',this.value);this.nextElementSibling.textContent=this.value+'%'">
         <div class="baxis-val">${ax.value}%</div>
       </div>
       <div style="display:flex;gap:4px;align-items:center;">
