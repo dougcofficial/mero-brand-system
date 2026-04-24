@@ -536,7 +536,7 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
             </label>
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border-radius:6px;border:1px solid var(--g200);background:var(--g100);">
               <input type="radio" name="b_projectType" value="naming" onchange="bSetProjectType('naming')" style="accent-color:#0365f9;">
-              <div><div style="font-size:13px;font-weight:500;color:#9B9A94;">Apresentação de Naming</div><div style="font-size:11px;color:#BBBAB4;">Em breve</div></div>
+              <div><div style="font-size:13px;font-weight:500;color:#0A0A0A;">Apresentação de Naming</div><div style="font-size:11px;color:#9B9A94;">Nomeando marcas</div></div>
             </label>
           </div>
           <input type="hidden" id="b_projectName">
@@ -591,7 +591,7 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
     </div>
 
     <!-- TIPOGRAFIA -->
-    <div class="brief-full" style="margin-bottom:16px;">
+    <div id="bSectionTipografia" class="brief-full" style="margin-bottom:16px;">
       <div class="brief-card">
         <div class="brief-card-title">Tipografia</div>
         <div id="bFontListArea" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
@@ -600,7 +600,7 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
     </div>
 
     <!-- CORES -->
-    <div class="brief-full" style="margin-bottom:40px;">
+    <div id="bSectionCores" class="brief-full" style="margin-bottom:40px;">
       <div class="brief-card">
         <div class="brief-card-title">Paleta de Cores</div>
         <div style="display:grid;grid-template-columns:32px 1fr 1fr 90px 24px;gap:8px;margin-bottom:8px;">
@@ -622,7 +622,7 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
     </div>
 
     <!-- CONSTRUÇÃO DO SÍMBOLO -->
-    <div class="brief-full" style="margin-bottom:16px;">
+    <div id="bSectionConstSimbolo" class="brief-full" style="margin-bottom:16px;">
       <div class="brief-card">
         <div class="brief-card-title">Construção do Símbolo</div>
         <div class="brief-field">
@@ -636,7 +636,7 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
     </div>
 
     <!-- CONSTRUÇÃO DA TIPOGRAFIA -->
-    <div class="brief-full" style="margin-bottom:16px;">
+    <div id="bSectionConstTipografia" class="brief-full" style="margin-bottom:16px;">
       <div class="brief-card">
         <div class="brief-card-title">Construção da Tipografia</div>
         <div class="brief-field">
@@ -650,7 +650,7 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
     </div>
 
     <!-- MOCKUPS -->
-    <div class="brief-full" style="margin-bottom:40px;">
+    <div id="bSectionMockups" class="brief-full" style="margin-bottom:40px;">
       <div class="brief-card">
         <div class="brief-card-title">Mockups de Aplicação</div>
         <div class="brief-label" style="margin-bottom:6px;">Imagens <span style="font-size:9px;color:#9B9A94;">· cada imagem = 1 slide após "Aplicações"</span></div>
@@ -861,6 +861,7 @@ function init() {
     dc(DEFAULTS.final)
   ];
   recomputeSubcoverNumbers();
+  applyProjectTypeVisibility('brand');
   renderThumbList();
   selectViewSlide(0);
   initSortable();
@@ -1043,9 +1044,14 @@ function renderPreview(slide, idx) {
 }
 
 function refreshPreview() {
-  if (activeIdx < 0) return;
   const vl = getViewList();
-  const entry = vl[activeViewIdx] || { slide: slides[activeIdx], slideIdx: activeIdx, groupIdx: -1 };
+  if (!vl.length) return;
+  // Guard: clamp activeViewIdx to valid range
+  if (activeViewIdx >= vl.length) activeViewIdx = vl.length - 1;
+  if (activeViewIdx < 0) activeViewIdx = 0;
+  const entry = vl[activeViewIdx];
+  if (!entry || !entry.slide) return;
+  activeIdx = entry.slideIdx;
   if (entry.groupIdx >= 0) entry.slide.data._previewGroup = entry.groupIdx;
   renderPreview(entry.slide, entry.slideIdx);
   if (entry.groupIdx >= 0) delete entry.slide.data._previewGroup;
@@ -2446,6 +2452,72 @@ const PROJECT_TYPE_NAMES = {
   naming: 'Apresentação de Naming'
 };
 
+// Slides to REMOVE (not just hide) for naming type — stored by name/type
+const NAMING_EXCLUDED_NAMES = new Set([
+  'Desenvolvimento','Construção do Símbolo','Tipografia',
+  'Construção da Tipografia','Cores','Aplicações'
+]);
+const NAMING_EXCLUDED_TYPES = new Set(['typography','colors','mockups']);
+
+// Storage for removed slides when in naming mode
+let _namingRemovedSlides = null; // [{slide, originalIndex}]
+
+// Briefing sections hidden per project type
+const PROJECT_HIDDEN_BRIEFING = {
+  naming: ['bSectionConstSimbolo','bSectionTipografia','bSectionConstTipografia',
+           'bSectionCores','bSectionMockups']
+};
+
+function applyProjectTypeVisibility(type) {
+  // ── Restore previously removed naming slides ──────────────────────────────
+  if (_namingRemovedSlides && _namingRemovedSlides.length > 0) {
+    // Re-insert in reverse order to preserve positions
+    _namingRemovedSlides.slice().reverse().forEach(({slide, originalIndex}) => {
+      slides.splice(originalIndex, 0, slide);
+    });
+    _namingRemovedSlides = null;
+  }
+
+  // ── Remove slides for naming ──────────────────────────────────────────────
+  if (type === 'naming') {
+    _namingRemovedSlides = [];
+    // Collect indices to remove (in reverse to splice safely)
+    const toRemove = [];
+    slides.forEach((s, i) => {
+      if (NAMING_EXCLUDED_NAMES.has(s.name) || NAMING_EXCLUDED_TYPES.has(s.type)) {
+        toRemove.push(i);
+      }
+    });
+    toRemove.slice().reverse().forEach(i => {
+      _namingRemovedSlides.unshift({slide: slides[i], originalIndex: i});
+      slides.splice(i, 1);
+    });
+  }
+
+  // ── Reset all remaining slides to visible ─────────────────────────────────
+  slides.forEach(s => { s.visible = true; });
+
+  // ── Briefing sections ─────────────────────────────────────────────────────
+  ['bSectionConstSimbolo','bSectionTipografia','bSectionConstTipografia',
+   'bSectionCores','bSectionMockups'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = '';
+  });
+  (PROJECT_HIDDEN_BRIEFING[type] || []).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  // ── Old colors section (redesign only) ────────────────────────────────────
+  const oldSec = document.getElementById('bOldColorsSection');
+  if (oldSec) oldSec.style.display = type === 'redesign' ? 'block' : 'none';
+
+  recomputeSubcoverNumbers();
+  // Reset selection to first slide safely
+  activeViewIdx = 0;
+  activeIdx = 0;
+}
+
 function bSetProjectType(type) {
   const cover = slides.find(s => s.type === 'cover');
   if (!cover) return;
@@ -2463,9 +2535,9 @@ function bSetProjectType(type) {
     }
     bRenderOldColors();
   }
-  const sec = document.getElementById('bOldColorsSection');
-  if (sec) sec.style.display = type === 'redesign' ? 'block' : 'none';
-  refreshPreview();
+  applyProjectTypeVisibility(type);
+  renderThumbList();
+  selectViewSlide(0);
 }
 
 function bAddOldColor() {
@@ -2550,8 +2622,7 @@ function bPopulate() {
   const ptype = (bGetCover()) ? (bGetCover().data.projectType || 'brand') : 'brand';
   const radios = document.querySelectorAll('input[name="b_projectType"]');
   radios.forEach(r => { r.checked = r.value === ptype; });
-  const sec = document.getElementById('bOldColorsSection');
-  if (sec) sec.style.display = ptype === 'redesign' ? 'block' : 'none';
+  applyProjectTypeVisibility(ptype);
   // Textslide texts
   const symbolSlides = slides.filter(s => s.type === 'textslide' && s.name === 'Construção do Símbolo');
   const typoSlides2 = slides.filter(s => s.type === 'textslide' && s.name === 'Construção da Tipografia');
