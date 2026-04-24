@@ -1410,7 +1410,7 @@ function pBrand(d, idx) {
         <input class="axis-label-input" placeholder="Base" value="${ea(ax.bottom)}" onchange="updateAxis(${idx},${ai},'bottom',this.value)">
       </div>
       <input type="range" class="axis-slider" min="0" max="100" value="${ax.value}" step="10" oninput="updateAxisVal(${idx},${ai},this.value)">
-      <div class="axis-val" id="axv_${ai}">${ax.value}%</div>
+      <div class="axis-val" id="axv_${ai}">${axisDisplay(ax.value)}</div>
     </div>`).join('');
   const tagsHTML = (d.tags||[]).map((t,ti) => `
     <div class="tag-item">${esc(t)}<span class="tag-remove" onclick="removeTag(${idx},${ti})">×</span></div>`).join('');
@@ -1902,7 +1902,7 @@ function clearFont(idx) { slides[idx].data.fontDataUrl=null; renderPanel(slides[
 function addAxis(idx) { slides[idx].data.axes.push({top:'Label A',bottom:'Label B',value:50}); renderPanel(slides[idx],idx); refreshPreview(); }
 function removeAxis(idx,ai) { slides[idx].data.axes.splice(ai,1); renderPanel(slides[idx],idx); refreshPreview(); }
 function updateAxis(idx,ai,k,v) { slides[idx].data.axes[ai][k]=v; refreshPreview(); }
-function updateAxisVal(idx,ai,v) { slides[idx].data.axes[ai].value=parseInt(v); const el=document.getElementById(`axv_${ai}`); if(el)el.textContent=v+'%'; refreshPreview(); }
+function updateAxisVal(idx,ai,v) { slides[idx].data.axes[ai].value=parseInt(v); const el=document.getElementById(`axv_${ai}`); if(el)el.textContent=axisDisplay(parseInt(v)); refreshPreview(); }
 
 function addTag(idx) { const i=document.getElementById('tagInput'); if(!i||!i.value.trim())return; slides[idx].data.tags.push(i.value.trim()); renderPanel(slides[idx],idx); refreshPreview(); }
 function removeTag(idx,ti) { slides[idx].data.tags.splice(ti,1); renderPanel(slides[idx],idx); refreshPreview(); }
@@ -2469,6 +2469,16 @@ function bSync(key, val) {
 // ════════════════════════════════
 // BRIEFING — Axes
 // ════════════════════════════════
+function axisDisplay(val) {
+  const v = Math.round((val - 50) * 2);
+  return (v > 0 ? '+' : '') + v + (v === 0 ? '' : '%');
+}
+
+function axisToInternal(display) {
+  // convert -100..+100 back to 0..100
+  return Math.round(display / 2 + 50);
+}
+
 function bRenderAxes() {
   const brand = bGetBrand();
   const axes = brand ? (brand.data.axes || []) : [];
@@ -2478,8 +2488,8 @@ function bRenderAxes() {
     <div class="baxis-row" id="bax_${i}">
       <input class="brief-input" style="padding:7px 9px;font-size:12px;" placeholder="Polo A" value="${ea(ax.top)}" oninput="bUpdateAxis(${i},'top',this.value)">
       <div style="display:flex;flex-direction:column;gap:2px;align-items:center;">
-        <input type="range" min="0" max="100" value="${ax.value}" step="10" oninput="bUpdateAxis(${i},'value',this.value);this.nextElementSibling.textContent=this.value+'%'">
-        <div class="baxis-val">${ax.value}%</div>
+        <input type="range" min="0" max="100" value="${ax.value}" step="10" oninput="bUpdateAxis(${i},'value',+this.value);this.nextElementSibling.textContent=axisDisplay(+this.value)">
+        <div class="baxis-val">${axisDisplay(ax.value)}</div>
       </div>
       <div style="display:flex;gap:4px;align-items:center;">
         <input class="brief-input" style="flex:1;padding:7px 9px;font-size:12px;" placeholder="Polo B" value="${ea(ax.bottom)}" oninput="bUpdateAxis(${i},'bottom',this.value)">
