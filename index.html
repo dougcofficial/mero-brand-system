@@ -341,6 +341,9 @@ select.field-input{cursor:pointer;}
 .textslide-right img{width:100%;height:100%;object-fit:cover;}
 .textslide-right-empty{width:100%;height:100%;background:#E8E7E2;display:flex;align-items:center;justify-content:center;font-size:18px;color:#BBB;}
 
+.colors-redesign-section{padding:0 100px 0;}
+.colors-redesign-label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#666666;margin-bottom:16px;}
+
 /* Custom color picker */
 .color-pick-wrap{position:relative;width:32px;height:32px;flex-shrink:0;}
 .color-pick-swatch{width:32px;height:32px;border-radius:2px;border:1px solid rgba(0,0,0,.12);cursor:pointer;transition:transform .1s;}
@@ -521,8 +524,22 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
       <div class="brief-card">
         <div class="brief-card-title">Projeto</div>
         <div class="brief-field">
-          <div class="brief-label">Nome do Projeto</div>
-          <input class="brief-input" id="b_projectName" placeholder="Ex: Identidade Visual 2025">
+          <div class="brief-label">Tipo de Projeto</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;" id="b_projectTypeOptions">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border-radius:6px;border:1px solid var(--g200);background:var(--g100);">
+              <input type="radio" name="b_projectType" value="brand" onchange="bSetProjectType('brand')" style="accent-color:#0365f9;">
+              <div><div style="font-size:13px;font-weight:500;color:#0A0A0A;">Desenvolvimento de Marca</div><div style="font-size:11px;color:#9B9A94;">Identidade visual do zero</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border-radius:6px;border:1px solid var(--g200);background:var(--g100);">
+              <input type="radio" name="b_projectType" value="redesign" onchange="bSetProjectType('redesign')" style="accent-color:#0365f9;">
+              <div><div style="font-size:13px;font-weight:500;color:#0A0A0A;">Redesign de Marca</div><div style="font-size:11px;color:#9B9A94;">Atualização de identidade existente</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border-radius:6px;border:1px solid var(--g200);background:var(--g100);">
+              <input type="radio" name="b_projectType" value="naming" onchange="bSetProjectType('naming')" style="accent-color:#0365f9;">
+              <div><div style="font-size:13px;font-weight:500;color:#9B9A94;">Apresentação de Naming</div><div style="font-size:11px;color:#BBBAB4;">Em breve</div></div>
+            </label>
+          </div>
+          <input type="hidden" id="b_projectName">
         </div>
         <div class="brief-field">
           <div class="brief-label">Data <span class="brief-auto-badge">AUTO</span></div>
@@ -595,6 +612,12 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
         </div>
         <div class="bcolor-list" id="bColorList"></div>
         <button class="bcolor-add" onclick="bAddColor()">+ Adicionar cor</button>
+        <!-- REDESIGN: old colors section, shown only for redesign type -->
+        <div id="bOldColorsSection" style="display:none;margin-top:20px;border-top:1px solid var(--g200);padding-top:16px;">
+          <div class="brief-label" style="margin-bottom:8px;">Identidade Anterior <span style="font-size:9px;color:#9B9A94;">· cores da marca antiga</span></div>
+          <div class="bcolor-list" id="bOldColorList"></div>
+          <button class="bcolor-add" onclick="bAddOldColor()">+ Adicionar cor antiga</button>
+        </div>
       </div>
     </div>
 
@@ -772,11 +795,13 @@ let cropImgIdx = -1;
 let cropState = { x:0, y:0, scale:100 };
 let cropDrag = false, cropStartX=0, cropStartY=0, cropOrigX=0, cropOrigY=0;
 
+
+
 // ════════════════════════════════
 // DEFAULTS
 // ════════════════════════════════
 const DEFAULTS = {
-  cover:{ type:'cover', name:'Capa', visible:true, data:{ projectName:'Desenvolvimento de Marca', clientName:'', monthYear: (() => { const d=new Date(); return d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}); })(), coverImage:null }},
+  cover:{ type:'cover', name:'Capa', visible:true, data:{ projectType:'brand', projectName:'Desenvolvimento de Marca', clientName:'', monthYear: (() => { const d=new Date(); return d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}); })(), coverImage:null }},
   index:{ type:'index', name:'Índice', visible:true, data:{} },
   subcover:{ type:'subcover', name:'Subcapa', visible:true, showInIndex:false, data:{ sectionNum:'01', title:'Posicionamento', subtitle:'Estratégia e essência da marca', bgColor:'#FAFAF8', textColor:'#0A0A0A', blockColor:'#0365f9' }},
   brand:{ type:'brand', name:'Painel de Marca', visible:true, data:{
@@ -806,7 +831,8 @@ const DEFAULTS = {
       {hex:'#0A0A0A',name:'Preto',role:'Primária'},
       {hex:'#C8B89A',name:'Areia',role:'Secundária'},
       {hex:'#FAFAF8',name:'Off-White',role:'Suporte'}
-    ]
+    ],
+    oldColors:[]
   }},
   images:{ type:'images', name:'Imagens', visible:true, data:{ layout:'1', images:[] }},
   textslide:{ type:'textslide', name:'Slide de Texto', visible:true, data:{ title:'', body:'', layout:'1', images:[] }},
@@ -1054,6 +1080,11 @@ function buildSlide(slide, idx) {
 }
 
 function buildCover(d) {
+  // Ensure projectName reflects current type for legacy projects
+  if (!d.projectType) d.projectType = 'brand';
+  if (!d.projectName || d.projectName === 'Nome do Projeto') {
+    d.projectName = PROJECT_TYPE_NAMES[d.projectType] || 'Desenvolvimento de Marca';
+  }
   const hasBg = !!d.coverImage;
   const bg = hasBg
     ? `<img class="cover-bg" src="${d.coverImage}">`
@@ -1243,13 +1274,11 @@ function buildMockupSlide(d, idx) {
   return '<div class="slide" style="background:#000;display:flex;flex-wrap:wrap;overflow:hidden;">' + slots + '</div>';
 }
 
-function buildColors(d) {
-  const bg = d.bgColor || '#FAFAF8';
-  const isDark = isColorDark(bg);
+function buildColorCards(colors, isDark) {
   const tc = isDark ? '#FAFAF8' : '#0A0A0A';
   const tcs = isDark ? 'rgba(255,255,255,.5)' : '#666666';
   const tch = isDark ? 'rgba(255,255,255,.35)' : '#888';
-  const cards = (d.colors||[]).map(c => {
+  return (colors||[]).map(c => {
     const rgb = hexRgb(c.hex);
     const cardTc = isDark ? 'rgba(255,255,255,.7)' : '#666';
     return `<div class="color-card">
@@ -1260,6 +1289,39 @@ function buildColors(d) {
       ${rgb?`<div class="color-card-rgb" style="color:${cardTc}">RGB ${rgb.r} ${rgb.g} ${rgb.b}</div>`:''}
     </div>`;
   }).join('');
+}
+
+function buildColors(d) {
+  const bg = d.bgColor || '#FAFAF8';
+  const isDark = isColorDark(bg);
+  const tc = isDark ? '#FAFAF8' : '#0A0A0A';
+  const tcs = isDark ? 'rgba(255,255,255,.5)' : '#666666';
+  // Check if redesign mode
+  const coverSlide = slides.find(s => s.type === 'cover');
+  const isRedesign = coverSlide && coverSlide.data.projectType === 'redesign';
+
+  if (isRedesign && (d.oldColors||[]).length > 0) {
+    const oldCards = buildColorCards(d.oldColors, isDark);
+    const newCards = buildColorCards(d.colors, isDark);
+    return `<div class="slide slide-colors" style="background:${bg};display:flex;flex-direction:column;">
+      <div class="colors-header" style="padding-bottom:16px;">
+        <div class="colors-section-label" style="color:${tcs}">Sistema Cromático</div>
+        <div class="colors-title" style="color:${tc}">Paleta de Cores</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;padding:0 100px 40px;gap:0;overflow:hidden;">
+        <div style="flex:1;border-bottom:1px solid ${isDark?'rgba(255,255,255,.1)':'#E0DED6'};padding-bottom:16px;">
+          <div class="colors-redesign-label" style="color:${tcs};">Identidade Anterior</div>
+          <div class="colors-grid" style="padding:0;">${oldCards}</div>
+        </div>
+        <div style="flex:1;padding-top:16px;">
+          <div class="colors-redesign-label" style="color:#0365f9;">Nova Identidade</div>
+          <div class="colors-grid" style="padding:0;">${newCards}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const cards = buildColorCards(d.colors, isDark);
   return `<div class="slide slide-colors" style="background:${bg}">
     <div class="colors-header">
       <div class="colors-section-label" style="color:${tcs}">Sistema Cromático</div>
@@ -1459,33 +1521,19 @@ function pTypo(d, idx) {
 }
 
 function pColors(d, idx) {
-  const colorsHTML = (d.colors||[]).map((c,ci) => {
-    const rgb = hexRgb(c.hex);
-    return `<div class="color-item">
-      <div class="color-pick-wrap">
-        <div class="color-pick-swatch" style="background:${c.hex}" onclick="openColorPicker('pcolor_${idx}_${ci}','pcolor',${idx},${ci})"></div>
-        <input type="color" class="color-pick-hidden" id="pcolor_${idx}_${ci}" value="${ea(c.hex)}" onchange="updColorHex(${idx},${ci},this.value)" oninput="updColorHex(${idx},${ci},this.value)">
-      </div>
-      <div class="color-info">
-        <div style="display:flex;align-items:center;gap:6px">
-          <input class="color-hex-input" id="phex_${idx}_${ci}" value="${ea(c.hex.toUpperCase())}" maxlength="7" onchange="updColorHexTxt(${idx},${ci},this.value)">
-          <select class="color-role-select" onchange="updColorRole(${idx},${ci},this.value)">
-            ${['Primária','Secundária','Suporte'].map(r=>`<option ${c.role===r?'selected':''}>${r}</option>`).join('')}
-          </select>
-        </div>
-        <input class="color-name-input" value="${ea(c.name||'')}" placeholder="Nome da cor" onchange="updColorName(${idx},${ci},this.value)">
-        ${rgb?`<span style="font-size:10px;color:#9B9A94;font-family:monospace">RGB ${rgb.r} ${rgb.g} ${rgb.b}</span>`:''}
-      </div>
-      <button class="btn-remove-axis" onclick="removeColor(${idx},${ci})">×</button>
-    </div>`;
-  }).join('');
+  const cover = slides.find(s => s.type === 'cover');
+  const isRedesign = cover && cover.data.projectType === 'redesign';
+  const redesignNote = isRedesign
+    ? `<div style="font-size:10px;color:#0365f9;margin-bottom:8px;">Modo Redesign ativo — edite as cores antigas no Briefing</div>`
+    : '';
   return `
     ${fi('Nome do Slide','f_slideName',slides[idx].name)}
-    ${fi('Cor de Fundo do Slide','f_colorsBg',d.bgColor||'#FAFAF8','color')}
-    <button class="btn btn-ghost btn-sm" style="width:100%;margin-bottom:12px" onclick="resetColorsBg(${idx})">↺ Restaurar cor padrão</button>
-    <div class="field-section">Cores da Paleta</div>
-    ${colorsHTML}
-    <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:4px" onclick="addColor(${idx})">+ Adicionar Cor</button>`;
+    <div class="field-section">Aparência</div>
+    ${fi('Cor de Fundo','f_colorsBg',d.bgColor,'color')}
+    <button class="btn btn-ghost btn-sm" style="width:100%;margin-bottom:8px;" onclick="resetColorsColors(${idx})">↺ Restaurar padrão</button>
+    ${redesignNote}
+    <div class="field-section">Cores <span style="font-size:9px;color:#C8B89A;font-weight:400">· editar no Briefing</span></div>
+    <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="switchTab('briefing')">→ Ir ao Briefing</button>`;
 }
 
 function pImages(d, idx) {
@@ -2387,6 +2435,96 @@ function bGetTypoSlide() { return slides.find(s => s.type === 'typography'); }
 function bGetTypoSlides() { return slides.filter(s => s.type === 'typography'); } // legacy compat
 function bGetColorSlide() { return slides.find(s => s.type === 'colors'); }
 
+function bGetProjectType() {
+  const cover = slides.find(s => s.type === 'cover');
+  return cover ? (cover.data.projectType || 'brand') : 'brand';
+}
+
+const PROJECT_TYPE_NAMES = {
+  brand: 'Desenvolvimento de Marca',
+  redesign: 'Redesign de Marca',
+  naming: 'Apresentação de Naming'
+};
+
+function bSetProjectType(type) {
+  const cover = slides.find(s => s.type === 'cover');
+  if (!cover) return;
+  cover.data.projectType = type;
+  cover.data.projectName = PROJECT_TYPE_NAMES[type] || type;
+  // If switching to redesign and no old colors yet, add 3 defaults
+  if (type === 'redesign') {
+    const cs = bGetColorSlide();
+    if (cs && (!cs.data.oldColors || cs.data.oldColors.length === 0)) {
+      cs.data.oldColors = [
+        {hex:'#0A0A0A', name:'Preto', role:'Primária'},
+        {hex:'#888888', name:'Cinza', role:'Secundária'},
+        {hex:'#FAFAF8', name:'Off-White', role:'Suporte'}
+      ];
+    }
+    bRenderOldColors();
+  }
+  const sec = document.getElementById('bOldColorsSection');
+  if (sec) sec.style.display = type === 'redesign' ? 'block' : 'none';
+  refreshPreview();
+}
+
+function bAddOldColor() {
+  const cs = bGetColorSlide(); if (!cs) return;
+  if (!cs.data.oldColors) cs.data.oldColors = [];
+  cs.data.oldColors.push({hex:'#888888', name:'Nova Cor', role:'Primária'});
+  bRenderOldColors();
+  refreshPreview();
+}
+
+function bRenderOldColors() {
+  const cs = bGetColorSlide();
+  const list = document.getElementById('bOldColorList');
+  if (!list || !cs) return;
+  const oldColors = cs.data.oldColors || [];
+  list.innerHTML = oldColors.map((c, ci) => `<div class="bcolor-row">
+      <div class="color-pick-wrap">
+        <div class="color-pick-swatch" style="background:${c.hex}" onclick="openColorPicker('boldcolor_${ci}','boldcolor',${ci})"></div>
+        <input type="color" class="color-pick-hidden" id="boldcolor_${ci}" value="${ea(c.hex)}" onchange="updateOldColorHex(${ci},this.value)" oninput="updateOldColorHex(${ci},this.value)">
+      </div>
+      <input class="bcolor-hex" id="boldhex_${ci}" value="${ea(c.hex.toUpperCase())}" maxlength="7" onchange="updateOldColorHexTxt(${ci},this.value)" oninput="if(/^#[0-9A-Fa-f]{6}$/.test(this.value))updateOldColorHexTxt(${ci},this.value)" placeholder="#000000">
+      <input class="bcolor-name" value="${ea(c.name||'')}" placeholder="Nome" onchange="updateOldColor(${ci},'name',this.value)">
+      <select class="bcolor-role" onchange="updateOldColor(${ci},'role',this.value)">
+        ${['Primária','Secundária','Suporte'].map(r=>`<option ${c.role===r?'selected':''}>${r}</option>`).join('')}
+      </select>
+      <button class="bcolor-del" onclick="removeOldColor(${ci})">×</button>
+    </div>`).join('');
+}
+
+
+
+function updateOldColor(ci, field, val) {
+  const cs = bGetColorSlide(); if (!cs) return;
+  if (!cs.data.oldColors) cs.data.oldColors = [];
+  cs.data.oldColors[ci][field] = val;
+  refreshPreview();
+}
+
+function updateOldColorHex(ci, val) {
+  const cs = bGetColorSlide(); if (!cs) return;
+  cs.data.oldColors[ci].hex = val;
+  const hexEl = document.getElementById('boldhex_' + ci);
+  if (hexEl) hexEl.value = val.toUpperCase();
+  refreshPreview();
+}
+function updateOldColorHexTxt(ci, val) {
+  const cs = bGetColorSlide(); if (!cs) return;
+  cs.data.oldColors[ci].hex = val;
+  const sw = document.getElementById('boldcolor_' + ci);
+  if (sw) { sw.value = val; sw.previousElementSibling.style.background = val; }
+  refreshPreview();
+}
+function removeOldColor(ci) {
+  const cs = bGetColorSlide(); if (!cs) return;
+  cs.data.oldColors.splice(ci, 1);
+  bRenderOldColors();
+  refreshPreview();
+}
+
 // Populate briefing fields FROM slide data
 function bPopulate() {
   const cover = bGetCover(); const brand = bGetBrand(); const final = bGetFinal();
@@ -2406,7 +2544,14 @@ function bPopulate() {
   bRenderTags();
   bRenderFonts();
   bRenderColors();
+  bRenderOldColors();
   bRenderConnectedList();
+  // Restore project type selector
+  const ptype = (bGetCover()) ? (bGetCover().data.projectType || 'brand') : 'brand';
+  const radios = document.querySelectorAll('input[name="b_projectType"]');
+  radios.forEach(r => { r.checked = r.value === ptype; });
+  const sec = document.getElementById('bOldColorsSection');
+  if (sec) sec.style.display = ptype === 'redesign' ? 'block' : 'none';
   // Textslide texts
   const symbolSlides = slides.filter(s => s.type === 'textslide' && s.name === 'Construção do Símbolo');
   const typoSlides2 = slides.filter(s => s.type === 'textslide' && s.name === 'Construção da Tipografia');
@@ -2966,7 +3111,7 @@ function bClearTextslideSlot(sIdx, j) {
 // ════════════════════════════════
 function bBindInputs() {
   const bindings = [
-    ['b_clientName','clientName'],['b_projectName','projectName'],
+    ['b_clientName','clientName'],
     ['b_monthYear','monthYear'],['b_segment','segment'],
     ['b_persona','persona'],['b_purpose','purpose'],
     ['b_negation','negation']
