@@ -247,15 +247,20 @@ textarea.field-input{resize:vertical;min-height:64px;}
 .cover-deco-circle{width:240px;height:240px;border:1px solid #66666633;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-weight:300;font-size:44px;color:#66666633;letter-spacing:.1em;}
 
 /* INDEX SLIDE */
-.slide-index{background:#FAFAF8;padding:100px 160px;display:flex;align-items:flex-start;}
-.index-left{flex:1;}
+.slide-index{background:#FAFAF8;padding:80px 160px;display:flex;align-items:flex-start;}
+.index-left{flex:1;display:flex;flex-direction:column;}
 .index-label{font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#666666;margin-bottom:20px;}
 .index-title{font-family:'Inter',sans-serif;font-weight:300;font-size:72px;line-height:.9;color:#0A0A0A;margin-bottom:60px;letter-spacing:-.02em;}
 .index-list{display:flex;flex-direction:column;gap:0;}
+.index-two-cols{display:flex;gap:60px;flex:1;}
+.index-col{flex:1;display:flex;flex-direction:column;gap:0;}
+.index-col .index-row{font-size:15px;padding:10px 0;}
+.index-col .index-row-name{font-size:15px;}
+.index-col .index-subitem-name{font-size:12px;}
 .index-subitem{display:flex;align-items:center;padding:6px 0 6px 40px;border-bottom:1px solid #F0EFE8;}
 .index-subitem-dot{width:4px;height:4px;border-radius:50%;background:#BBBAB4;margin-right:12px;flex-shrink:0;}
 .index-subitem-name{font-size:13px;font-weight:400;color:#999;flex:1;letter-spacing:-.01em;}
-.index-row{display:flex;align-items:center;padding:18px 0;border-bottom:1px solid #E8E7E0;}
+.index-row{display:flex;align-items:center;padding:14px 0;border-bottom:1px solid #E8E7E0;}
 .index-row:first-child{border-top:1px solid #E8E7E0;}
 .index-row-num{font-size:11px;font-weight:600;color:#666666;letter-spacing:.1em;min-width:40px;}
 .index-row-name{font-size:18px;font-weight:400;color:#2a2a28;flex:1;letter-spacing:-.01em;}
@@ -621,6 +626,46 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
       </div>
     </div>
 
+    <!-- TOP 40 (naming only) -->
+    <div id="bSectionTop40" style="display:none;margin-bottom:16px;">
+      <div class="brief-full">
+        <div class="brief-card">
+          <div class="brief-card-title" style="display:flex;justify-content:space-between;align-items:center;">
+            Top 40 — Alternativas de Naming
+            <span id="top40Counter" style="font-size:12px;font-weight:400;color:#0365f9;background:#e8f0fe;padding:3px 10px;border-radius:20px;">0 finalistas</span>
+          </div>
+          <div class="brief-label" style="margin-bottom:10px;">Digite as 40 palavras. Marque as que <strong>seguem para a próxima fase</strong> (desmarcadas aparecem riscadas).</div>
+          <div id="bTop40List" style="display:flex;flex-direction:column;gap:4px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLASSE INPI (naming only) -->
+    <div id="bSectionInpi" style="display:none;margin-bottom:16px;">
+      <div class="brief-full">
+        <div class="brief-card">
+          <div class="brief-card-title">Classe INPI</div>
+          <div class="brief-field">
+            <div class="brief-label">Número da Classe <span style="font-size:9px;color:#9B9A94;">· 01 a 45</span></div>
+            <select class="brief-input" id="b_inpiClass" onchange="bSyncInpiClass(this.value)" style="font-size:14px;"></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONDIÇÃO HISTÓRICA (naming only) -->
+    <div id="bSectionCondicaoHistorica" style="display:none;margin-bottom:16px;">
+      <div class="brief-full">
+        <div class="brief-card">
+          <div class="brief-card-title">Condição Histórica / Etimologia</div>
+          <div class="brief-field">
+            <div class="brief-label">Palavras e descrições <span style="font-size:9px;color:#9B9A94;">· uma por linha, formato: PALAVRA - descrição</span></div>
+            <textarea class="brief-input" id="b_condicaoText" placeholder="HESPÉRIDES - ninfas que guardavam jardins gregos&#10;VERTUMNO - Deus romano dos jardins e dos pomares" style="min-height:160px;font-family:monospace;font-size:12px;" oninput="bSyncCondicaoHistorica()"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- CONSTRUÇÃO DO SÍMBOLO -->
     <div id="bSectionConstSimbolo" class="brief-full" style="margin-bottom:16px;">
       <div class="brief-card">
@@ -837,6 +882,17 @@ const DEFAULTS = {
   images:{ type:'images', name:'Imagens', visible:true, data:{ layout:'1', images:[] }},
   textslide:{ type:'textslide', name:'Slide de Texto', visible:true, data:{ title:'', body:'', layout:'1', images:[] }},
   mockups:{ type:'mockups', name:'Mockups', visible:true, data:{ groups:[] }},
+  methodology:{ type:'methodology', name:'Etapas da Metodologia', visible:true, data:{ activeStep:1 } },
+  qualifiedgen:{ type:'qualifiedgen', name:'Geração Qualificada', visible:true, data:{} },
+  mandamentos:{ type:'mandamentos', name:'Mandamentos', visible:true, data:{} },
+  procedimentos:{ type:'procedimentos', name:'Procedimentos', visible:true, data:{} },
+  condicaohistorica:{ type:'condicaohistorica', name:'Condição Histórica', visible:true, data:{ text:'' } },
+  top40:{ type:'top40', name:'Top 40', visible:true, data:{ words: Array.from({length:40}, (_,i) => ({text:'', kept:false})) } },
+  riscados:{ type:'riscados', name:'Riscados', visible:true, data:{ words: [] } },
+  inpiclass:{ type:'inpiclass', name:'Classe INPI', visible:true, data:{ classNum: 35 } },
+  filtros:{ type:'filtros', name:'Tipos de Filtros', visible:true, data:{} },
+  sinaleira:{ type:'sinaleira', name:'Sinaleira de Viabilidade', visible:true, data:{ rows:{} } },
+  finalistas:{ type:'finalistas', name:'Finalistas', visible:true, data:{} },
   final:{ type:'final', name:'Slide Final', visible:true, data:{ brandName:'Mero', contact:'Rua Duque de Caxias, 1170\nLajeado/RS\ncontato@mero.com.br\nwww.mero.com.br', bgColor:'#0365f9', textColor:'#ffffff' }}
 };
 
@@ -1004,7 +1060,7 @@ function getViewList() {
 }
 
 function thumbBg(s) {
-  const m = {cover:'#0365f9',index:'#1a1a18',subcover:s.data?.bgColor||'#FAFAF8',brand:'#FAFAF8',typography:'#000000',colors:s.data?.bgColor||'#FAFAF8',images:'#CCCCCC',textslide:'#FAFAF8',mockups:'#222222',final:s.data?.bgColor||'#0365f9'};
+  const m = {cover:'#0365f9',index:'#1a1a18',subcover:s.data?.bgColor||'#FAFAF8',brand:'#FAFAF8',typography:'#000000',colors:s.data?.bgColor||'#FAFAF8',images:'#CCCCCC',textslide:'#FAFAF8',mockups:'#222222',methodology:'#FAFAF8',qualifiedgen:'#FAFAF8',mandamentos:'#FAFAF8',procedimentos:'#FAFAF8',condicaohistorica:'#FAFAF8',inpiclass:'#FAFAF8',filtros:'#FAFAF8',sinaleira:'#FAFAF8',finalistas:'#0A0A0A',top40:'#FAFAF8',riscados:'#FAFAF8',final:s.data?.bgColor||'#0365f9'};
   return m[s.type]||'#EEE';
 }
 
@@ -1077,12 +1133,77 @@ function buildSlide(slide, idx) {
       case 'images': return buildImages(slide.data);
       case 'textslide': return buildTextslide(slide.data);
       case 'mockups': return buildMockupSlide(slide.data, idx);
+      case 'methodology': return buildMethodology(slide.data);
+      case 'qualifiedgen': return buildQualifiedGen(slide.data);
+      case 'mandamentos': return buildMandamentos(slide.data);
+      case 'procedimentos': return buildProcedimentos(slide.data);
+      case 'inpiclass': return buildInpiClass(slide.data);
+      case 'sinaleira': return buildSinaleira(slide.data);
+      case 'finalistas': return buildFinalistas(slide.data);
+      case 'filtros': return buildFiltros(slide.data);
+      case 'top40': return buildTop40(slide.data, false);
+      case 'riscados': {
+        // Always mirror top40 words
+        const t40s = slides.find(s => s.type === 'top40');
+        return buildTop40(t40s ? t40s.data : slide.data, true);
+      }
+    case 'sinaleira':
+      body.innerHTML = (() => {
+        const t40 = slides.find(s => s.type === 'top40');
+        const finalists = t40 ? (t40.data.words || []).filter(w => w.kept && w.text) : [];
+        if (!finalists.length) return '<div style="padding:12px;font-size:12px;color:var(--g400);">Nenhum finalista marcado no Top 40.</div>';
+        const rowsHTML = finalists.map((w) => {
+          const row = (slides[idx].data.rows && slides[idx].data.rows[w.text]) || {};
+          const colorBtn = (field, color) => {
+            const active = (row[field+'Color'] === color) ? 'outline:2px solid #0365f9;outline-offset:1px;' : '';
+            const bg = color === 'green' ? '#a8e6b0' : color === 'yellow' ? '#f5d87a' : '#f09090';
+            return `<button style="width:18px;height:18px;border-radius:50%;background:${bg};${active}border:none;cursor:pointer;flex-shrink:0;" onclick="setSinColor(${idx},'${esc(w.text)}','${field}','${color}')"></button>`;
+          };
+          return `<div style="border:1px solid var(--g200);border-radius:6px;padding:8px;margin-bottom:8px;background:var(--g100);">
+            <div style="font-size:11px;font-weight:700;color:#0A0A0A;margin-bottom:6px;">${esc(w.text)}</div>
+            <div style="font-size:10px;color:var(--g400);margin-bottom:3px;">.COM.BR</div>
+            <div style="display:flex;gap:4px;align-items:center;margin-bottom:6px;">
+              <input class="field-input" style="flex:1;font-size:11px;padding:3px 6px;" placeholder="Ex: Não disponível" value="${esc(row.combrText||'')}" oninput="setSinText(${idx},'${esc(w.text)}','combr',this.value)">
+              ${colorBtn('combr','green')}${colorBtn('combr','yellow')}${colorBtn('combr','red')}
+            </div>
+            <div style="font-size:10px;color:var(--g400);margin-bottom:3px;">INPI</div>
+            <div style="display:flex;gap:4px;align-items:center;margin-bottom:6px;">
+              <input class="field-input" style="flex:1;font-size:11px;padding:3px 6px;" placeholder="Ex: Livre na classe" value="${esc(row.inpiText||'')}" oninput="setSinText(${idx},'${esc(w.text)}','inpi',this.value)">
+              ${colorBtn('inpi','green')}${colorBtn('inpi','yellow')}${colorBtn('inpi','red')}
+            </div>
+            <div style="font-size:10px;color:var(--g400);margin-bottom:3px;">STATUS</div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <input class="field-input" style="flex:1;font-size:11px;padding:3px 6px;" placeholder="Ex: APTA" value="${esc(row.statusText||'')}" oninput="setSinText(${idx},'${esc(w.text)}','status',this.value)">
+              ${colorBtn('status','green')}${colorBtn('status','yellow')}${colorBtn('status','red')}
+            </div>
+          </div>`;
+        }).join('');
+        return `<div style="padding:4px 0;">${fi('Nome do Slide','f_slideName',slides[idx].name)}<div class="field-section">Dados da Tabela</div>${rowsHTML}</div>`;
+      })();
+      bindName('f_slideName', idx);
+      break;
+    case 'inpiclass':
+      body.innerHTML = `<div style="padding:4px 0;">
+        ${fi('Nome do Slide','f_slideName',slides[idx].name)}
+        <div class="field-section">Classe INPI <span style="font-size:9px;color:#C8B89A;">· editar no Briefing</span></div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="switchTab('briefing')">→ Ir ao Briefing</button>
+      </div>`;
+      break;
+    case 'top40':
+    case 'riscados':
+      body.innerHTML = `<div style="padding:4px 0;">
+        ${fi('Nome do Slide','f_slideName',slides[idx].name)}
+        <div class="field-section">Palavras <span style="font-size:9px;color:#C8B89A;">· editar no Briefing</span></div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="switchTab('briefing')">→ Ir ao Briefing</button>
+      </div>`;
+      break;
+    case 'condicaohistorica': return buildCondicaoHistorica(slide.data);
       case 'final': return buildFinal(slide.data);
       default: return '<div class="slide"></div>';
     }
   })();
   // inject page num inside .slide
-  return inner.replace(/(<div class="slide[^"]*")>/, `$1>${pageNumHTML}`);
+  return inner.replace(/(<div class="slide(?:[^"]*)"(?:[^>]*))>/, `$1>${pageNumHTML}`);
 }
 
 function buildCover(d) {
@@ -1107,13 +1228,18 @@ function buildCover(d) {
   </div>`;
 }
 function buildIndex() {
-  const sectionSlides = slides.filter(s => s.type === 'subcover' || s.type === 'cover');
   const visibleSlides = slides.filter(s => s.visible);
   let rowNum = 0;
   const posSubItems = ['Segmento','Persona','Propósito','Negação','Eixos Semânticos','Tonalidade'];
   const typoSubItems = ['Tipografia principal e auxiliares'];
   const colorSubItems = ['Cor principal e auxiliares'];
-  const rows = slides.map((s, i) => {
+  const etapaNames = ['','Definição do briefing','Geração de Alternativas','Avaliação Prévia','Análise de viabilidade no INPI e www.','Matriz de avaliação com o cliente','Escolha do nome junto ao cliente'];
+  const etapaSubItems = {
+    2: ['Nuvem de Palavras','Condição Histórica/Cultural'],
+    4: ['Classe Escolhida','Sinaleira de Viabilidade'],
+  };
+
+  const rowItems = slides.map((s, i) => {
     if (!s.showInIndex) return null;
     rowNum++;
     const pg = visibleSlides.indexOf(s) + 1;
@@ -1121,25 +1247,34 @@ function buildIndex() {
     const isPositioning = s.type === 'subcover' && (s.data?.title === 'Posicionamento' || s.name === 'Posicionamento');
     const isTypo = s.type === 'subcover' && (s.data?.title === 'Tipografia' || s.name === 'Tipografia');
     const isColors = s.type === 'subcover' && (s.data?.title === 'Cores' || s.name === 'Cores');
-    const activeSubItems = isPositioning ? posSubItems : isTypo ? typoSubItems : isColors ? colorSubItems : [];
-    const subRows = activeSubItems.length ? activeSubItems.map(item => `
-      <div class="index-subitem">
-        <div class="index-subitem-dot"></div>
-        <div class="index-subitem-name">${esc(item)}</div>
-      </div>`).join('') : '';
-    return `<div class="index-row">
-      <div class="index-row-num">${rowNum.toString().padStart(2,'0')}</div>
-      <div class="index-row-name">${esc(name)}</div>
-      <div class="index-row-page">${pg > 0 ? pg : '—'}</div>
-    </div>${subRows}`;
-  }).filter(Boolean).join('');
-  return `<div class="slide slide-index">
-    <div class="index-left">
-      <div class="index-label">Conteúdo</div>
-      <div class="index-title">Índice</div>
-      <div class="index-list">${rows}</div>
-    </div>
-  </div>`;
+    const isMethodology = s.type === 'methodology';
+    const step = s.data?.activeStep;
+    let activeSubItems = isPositioning ? posSubItems : isTypo ? typoSubItems : isColors ? colorSubItems :
+      (isMethodology && etapaSubItems[step]) ? etapaSubItems[step] : [];
+    const displayName = isMethodology ? (etapaNames[step] || name) : name;
+    const subHTML = activeSubItems.map(item =>
+      '<div class="index-subitem"><div class="index-subitem-dot"></div><div class="index-subitem-name">' + esc(item) + '</div></div>'
+    ).join('');
+    return '<div class="index-row">' +
+      '<div class="index-row-num">' + rowNum.toString().padStart(2,'0') + '</div>' +
+      '<div class="index-row-name">' + esc(displayName) + '</div>' +
+      '<div class="index-row-page">' + (pg > 0 ? pg : '—') + '</div>' +
+    '</div>' + subHTML;
+  }).filter(Boolean);
+
+  // Split into two columns if more than 7 items
+  const total = rowItems.length;
+  let listHTML;
+  if (total >= 7) {
+    const mid = Math.ceil(total / 2);
+    const col1 = rowItems.slice(0, mid).join('');
+    const col2 = rowItems.slice(mid).join('');
+    listHTML = '<div class="index-two-cols"><div class="index-col">' + col1 + '</div><div class="index-col">' + col2 + '</div></div>';
+  } else {
+    listHTML = '<div class="index-list">' + rowItems.join('') + '</div>';
+  }
+
+  return '<div class="slide slide-index"><div class="index-left"><div class="index-label">Conteúdo</div><div class="index-title">Índice</div>' + listHTML + '</div></div>';
 }
 
 function buildSubcover(d) {
@@ -1280,6 +1415,301 @@ function buildMockupSlide(d, idx) {
   return '<div class="slide" style="background:#000;display:flex;flex-wrap:wrap;overflow:hidden;">' + slots + '</div>';
 }
 
+function buildCondicaoHistorica(d) {
+  const raw = (d.text || '').trim();
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  const entries = lines.map(line => {
+    const dashIdx = line.indexOf(' - ');
+    if (dashIdx >= 0) {
+      const word = line.slice(0, dashIdx);
+      const desc = line.slice(dashIdx + 3);
+      return `<div style="margin-bottom:18px;line-height:1.45;font-size:15px;color:#0A0A0A;">` +
+        `<span style="font-weight:800;color:#0365f9;letter-spacing:.04em;">${esc(word)}</span>` +
+        `<span style="font-weight:400;color:#444;"> — ${esc(desc)}</span></div>`;
+    }
+    return `<div style="margin-bottom:18px;font-size:15px;color:#444;">${esc(line)}</div>`;
+  });
+  // Split into 3 columns
+  const total = entries.length;
+  const perCol = Math.ceil(total / 3);
+  const cols = [0, 1, 2].map(ci => {
+    const slice = entries.slice(ci * perCol, (ci + 1) * perCol).join('');
+    return `<div style="flex:1;padding:0 28px;border-right:${ci < 2 ? '1px solid #E0DED6' : 'none'};">${slice}</div>`;
+  }).join('');
+
+  const empty = `<div style="flex:1;display:flex;align-items:center;justify-content:center;color:#BBB;font-size:16px;font-style:italic;">Adicione palavras no Briefing</div>`;
+
+  return `<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;padding:60px 80px;gap:36px;font-family:'Inter',sans-serif;">
+    <div style="font-size:20px;font-weight:800;color:#0A0A0A;letter-spacing:.1em;text-transform:uppercase;text-align:center;">Condições Históricas/Culturais e Etimologia</div>
+    <div style="flex:1;display:flex;overflow:hidden;">${total > 0 ? cols : empty}</div>
+  </div>`;
+}
+
+function buildTop40(d, isRiscados) {
+  const words = d.words || [];
+  const perCol = 10;
+  const cols = [0,1,2,3].map(ci => {
+    const slice = words.slice(ci * perCol, (ci + 1) * perCol);
+    const items = slice.map((w, i) => {
+      const num = ci * perCol + i + 1;
+      const txt = w.text || '';
+      const struck = isRiscados && !w.kept;
+      const color = struck ? '#D45A3A' : '#0A0A0A';
+      const decoration = struck ? 'line-through' : 'none';
+      return `<div style="padding:13px 0;border-bottom:1px solid #E8E7E2;display:flex;align-items:baseline;gap:10px;">
+        <span style="font-size:13px;color:#999;min-width:24px;text-align:right;flex-shrink:0;">${num}.</span>
+        <span style="font-size:19px;font-weight:700;color:${color};text-decoration:${decoration};letter-spacing:.02em;">${esc(txt)}</span>
+      </div>`;
+    }).join('');
+    return `<div style="flex:1;max-width:22%;">${items}</div>`;
+  }).join('');
+
+  const title = isRiscados ? 'Filtro — Palavras com Potencial' : 'Top 40 — Alternativas de Naming';
+  return `<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 120px;gap:32px;font-family:'Inter',sans-serif;">
+    <div style="font-size:20px;font-weight:800;color:#0A0A0A;letter-spacing:.12em;text-transform:uppercase;text-align:center;">${title}</div>
+    <div style="display:flex;gap:48px;justify-content:center;width:100%;">${cols}</div>
+  </div>`;
+}
+
+const INPI_CLASSES = {
+  1: 'Substâncias químicas destinadas à indústria, às ciências, à fotografia, assim como à agricultura, à horticultura e à silvicultura; resinas artificiais não-processadas, matérias plásticas não processadas; adubo; composições extintoras de fogo; preparações para temperar e soldar; substâncias químicas destinadas a conservar alimentos; substâncias tanantes; substâncias adesivas destinados à indústria.',
+  2: 'Tintas, vernizes, lacas; preservativos contra oxidação e contra deterioração da madeira; matérias tintoriais; mordentes; resinas naturais em estado bruto; metais em folhas e em pó para pintores, decoradores, impressores e artistas.',
+  3: 'Preparações para branquear e outras substâncias para uso em lavanderia; produtos para limpar, polir e decapar; produtos abrasivos; sabões; perfumaria, óleos essenciais, cosméticos, loções para os cabelos; dentifrícios.',
+  4: 'Graxas e óleos industriais; lubrificantes; produtos para absorver, molhar e ligar pó; combustíveis (incluindo gasolina para motores) e materiais para iluminação; velas e pavios para iluminação.',
+  5: 'Preparações farmacêuticas e veterinárias; preparações higiênicas para uso medicinal; substâncias dietéticas adaptadas para uso medicinal, alimentos para bebês; emplastros, materiais para curativos; material para obturações dentárias, cera dentária; desinfetantes; preparações para destruição de vermes; fungicidas, herbicidas.',
+  6: 'Metais comuns e suas ligas; materiais de metal para construção; construções transportáveis de metal; materiais de metal para vias férreas; cabos e fios de metal comum não elétricos; serralharia, pequenos artigos de ferragem; canos e tubos de metal; cofres; produtos de metal comum não incluídos em outras classes; minérios.',
+  7: 'Máquinas e ferramentas mecânicas; motores (exceto para veículos terrestres); e engates de máquinas e componentes de transmissão (exceto para veículos terrestres); instrumentos agrícolas não manuais; chocadeiras.',
+  8: 'Ferramentas e instrumentos manuais (propulsão muscular); cutelaria; armas brancas; aparelhos de barbear.',
+  9: 'Aparelhos e instrumentos científicos, náuticos, geodésicos, fotográficos, cinematográficos, ópticos, de pesagem, de medição, de sinalização, de controle (inspeção), de salvamento e de ensino; aparelhos e instrumentos para conduzir, interromper, transformar, acumular, regular ou controlar eletricidade; aparelhos para registrar, transmitir ou reproduzir som ou imagens; suporte de registro magnético, discos acústicos; máquinas distribuidoras automáticas e mecanismos para aparelhos operados com moedas; caixas registradoras, máquinas de calcular, equipamento de processamento de dados e computadores; aparelhos extintores de incêndio.',
+  10: 'Aparelhos e instrumentos cirúrgicos, médicos, odontológicos e veterinários, membros, olhos e dentes artificiais; artigos ortopédicos; material de sutura.',
+  11: 'Aparelhos para iluminação, aquecimento, produção de vapor, cozinhar, refrigeração, secagem, ventilação, fornecimento de água e para fins sanitários.',
+  12: 'Veículos; aparelhos para locomoção por terra, ar ou água.',
+  13: 'Armas de fogo; munições e projéteis; explosivos; fogos de artifício.',
+  14: 'Metais preciosos e suas ligas e produtos nessas matérias ou folheados, não incluídos em outras classes; jóias, bijuteria, pedras preciosas; relojoaria e instrumentos cronométricos.',
+  15: 'Instrumentos musicais.',
+  16: 'Papel, papelão e produtos feitos desses materiais e não incluídos em outras classes; material impresso; artigos para encadernação; fotografias; papelaria; adesivos para papelaria ou uso doméstico; materiais para artistas; pincéis; máquinas de escrever e material de escritório (exceto móveis); material de instrução e didático (exceto aparelhos); matérias plásticas para embalagem (não incluídas em outras classes); caracteres de imprensa; clichês.',
+  17: 'Borracha, guta-percha, goma, amianto, mica e produtos feitos com estes materiais e não incluídos em outras classes; produtos em matérias plásticas semiprocessadas; materiais para calafetar, vedar e isolar; canos flexíveis, não metálicos.',
+  18: 'Couro e imitações de couros, produtos nessas matérias não incluídos em outras classes; peles de animais; malas e bolsas de viagem; guarda-chuvas, guarda-sóis e bengalas; chicotes, arreios e selaria.',
+  19: 'Materiais de construção (não metálicos); canos rígidos não metálicos para construção; asfalto, piche e betume; construções transportáveis não metálicas; monumentos não metálicos.',
+  20: 'Móveis, espelhos, molduras; produtos (não incluídos em outras classes), de madeira, cortiça, junco, cana, vime, chifre, marfim, osso, barbatana de baleia, concha, tartaruga, âmbar, madrepérola, espuma-do-mar e sucedâneos de todas estas matérias ou de matérias plásticas.',
+  21: 'Utensílios e recipientes para a casa ou cozinha (não de metal precioso ou folheado); pentes e esponjas; escovas (exceto para pintura); materiais para fabricação de escovas; materiais de limpeza; palha de aço; vidro não trabalhado ou semitrabalhado (exceto para construção); artigos de vidro, porcelana e louça de faiança não incluídos em outras classes.',
+  22: 'Cordas, fios, redes, tendas, toldos, oleados, velas, sacos, sacolas (não incluídos em outras classes); matérias de enchimento (exceto borrachas e plásticos); matérias têxteis fibrosas em bruto.',
+  23: 'Fios para uso têxtil.',
+  24: 'Tecidos e produtos têxteis, não incluídos em outras classes; coberturas de cama e mesa.',
+  25: 'Vestuário, calçados e chapelaria.',
+  26: 'Rendas e bordados, fitas e laços; botões, colchetes e ilhós, alfinetes e agulhas; flores artificiais.',
+  27: 'Carpetes, tapetes, capachos e esteiras, linóleo e outros revestimentos de assoalhos; colgaduras que não sejam em matérias têxteis.',
+  28: 'Jogos e brinquedos; artigos para ginástica e esporte não incluídos em outras classes; decorações para árvores de Natal.',
+  29: 'Carne, peixe, aves e caça; extratos de carne; frutas, legumes e verduras em conserva, secos e cozidos; geléias, doces e compotas; ovos, leite e laticínio; óleos e gorduras comestíveis.',
+  30: 'Café, chá, cacau, açúcar, arroz, tapioca, sagu, sucedâneos de café; farinhas e preparações feitas de cereais, pão, massas e confeitos, sorvetes; mel, xarope de melaço; lêvedo, fermento em pó; sal, mostarda; vinagre, molhos (condimentos); especiarias; gelo.',
+  31: 'Produtos agrícolas, hortícolas, florestais e grãos não incluídos em outras classes; animais vivos; frutas, legumes e verduras frescos; sementes, plantas e flores naturais; alimentos para animais, malte.',
+  32: 'Cervejas; águas minerais e gasosas e outras bebidas não alcoólicas; bebidas de frutas e sucos de fruta; xaropes e outras preparações para fabricar bebidas.',
+  33: 'Bebidas alcoólicas (exceto cervejas).',
+  34: 'Tabaco; artigos para fumantes; fósforos.',
+  35: 'Propaganda; gestão de negócios; administração de negócios; funções de escritório.',
+  36: 'Seguros; negócios financeiros; negócios monetários; negócios imobiliários.',
+  37: 'Construção civil; reparos; serviços de instalação.',
+  38: 'Telecomunicações.',
+  39: 'Transporte; embalagem e armazenagem de produtos; organização de viagens.',
+  40: 'Tratamento de materiais.',
+  41: 'Educação, provimento de treinamento; entretenimento; atividades desportivas e culturais.',
+  42: 'Serviços científicos e tecnológicos, pesquisa e desenho relacionados a estes; serviços de análise industrial e pesquisa; concepção, projeto e desenvolvimento de hardware e software de computador.',
+  43: 'Serviços de fornecimento de comida e bebida; acomodações temporárias.',
+  44: 'Serviços médicos; serviços veterinários; serviços de higiene e beleza para seres humanos ou animais; serviços de agricultura, de horticultura e de silvicultura.',
+  45: 'Serviços jurídicos; serviços pessoais e sociais prestados por terceiros, para satisfazer necessidades de indivíduos; serviços de segurança para proteção de bens e pessoas.',
+};
+
+function buildFiltros(d) {
+  const items = [
+    { label:'Pronúncia', icon:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0365f9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>' },
+    { label:'Escrita', icon:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0365f9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' },
+    { label:'Significado', icon:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0365f9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' },
+    { label:'Exclusividade', icon:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0365f9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' },
+    { label:'Provocativo', icon:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0365f9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>' },
+  ];
+  const circles = items.map(it => `
+    <div style="flex:1;aspect-ratio:1;border-radius:50%;background:#ffffff;border:2px solid #0365f9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;box-sizing:border-box;max-width:240px;max-height:240px;">
+      ${it.icon}
+      <div style="font-family:'Inter',sans-serif;font-size:20px;font-weight:700;color:#0A0A0A;text-align:center;line-height:1.2;">${it.label}</div>
+    </div>`).join('');
+  return `<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 100px;gap:64px;font-family:'Inter',sans-serif;">
+    <div style="font-size:22px;font-weight:800;color:#0A0A0A;letter-spacing:.12em;text-transform:uppercase;text-align:center;">Filtros</div>
+    <div style="display:flex;gap:28px;align-items:center;justify-content:center;width:100%;">${circles}</div>
+  </div>`;
+}
+
+function buildFinalistas(d) {
+  return `<div class="slide" style="background:#0A0A0A;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;">
+    <div style="font-size:32px;font-weight:800;color:#ffffff;letter-spacing:.14em;text-transform:uppercase;text-align:center;">Conhecendo as Alternativas</div>
+  </div>`;
+}
+
+function buildSinaleira(d) {
+  // Get finalist names from top40
+  const t40 = slides.find(s => s.type === 'top40');
+  const inpiS = slides.find(s => s.type === 'inpiclass');
+  const classNum = inpiS ? inpiS.data.classNum : '?';
+  const finalists = t40 ? (t40.data.words || []).filter(w => w.kept && w.text) : [];
+  // Get date from cover
+  const cover = slides.find(s => s.type === 'cover');
+  const monthYear = cover ? (cover.data.monthYear || '') : '';
+
+  if (finalists.length === 0) {
+    return `<div class="slide" style="background:#FAFAF8;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;color:#BBB;font-size:20px;">Marque finalistas no Top 40 do Briefing</div>`;
+  }
+
+  const rows = finalists.map((w, i) => {
+    const row = (d.rows && d.rows[w.text]) || { combrText:'', combrColor:'', inpiText:'', inpiColor:'', statusText:'', statusColor:'' };
+    const cellStyle = (color) => {
+      const bg = color === 'green' ? '#a8e6b0' : color === 'yellow' ? '#f5d87a' : color === 'red' ? '#f09090' : '#f5f5f0';
+      return `background:${bg};padding:14px 20px;vertical-align:middle;border:1px solid #ddd;`;
+    };
+    return `<tr>
+      <td style="padding:14px 20px;border:1px solid #ddd;font-weight:700;font-size:16px;background:#f9f9f6;">${String(i+1).padStart(2,'0')}. ${esc(w.text)}</td>
+      <td style="${cellStyle(row.combrColor)}font-size:14px;text-align:center;">${esc(row.combrText||'')}</td>
+      <td style="${cellStyle(row.inpiColor)}font-size:14px;">${esc(row.inpiText||'')}</td>
+      <td style="${cellStyle(row.statusColor)}font-size:14px;font-weight:600;">${esc(row.statusText||'')}</td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 72px 36px;gap:20px;font-family:'Inter',sans-serif;">
+    <table style="width:100%;max-width:1680px;border-collapse:collapse;font-family:'Inter',sans-serif;">
+      <thead>
+        <tr style="background:#0A0A0A;">
+          <th style="padding:16px 20px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;text-align:left;border:1px solid #222;width:18%;">NOME</th>
+          <th style="padding:16px 20px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;text-align:center;border:1px solid #222;width:22%;">.COM.BR</th>
+          <th style="padding:16px 20px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;text-align:left;border:1px solid #222;width:36%;">INPI — CLASSE ${classNum}</th>
+          <th style="padding:16px 20px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;text-align:left;border:1px solid #222;width:24%;">STATUS</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="font-size:11px;color:#888;line-height:1.6;text-align:center;margin-top:auto;">
+      Pesquisa superficial de análise de disponibilidade. Todo o processo de registro de nome em INPI deve passar por um advogado especializado para encaminhamento e certificação de disponibilidade.<br>
+      Informações atualizadas em ${esc(monthYear)}.
+    </div>
+  </div>`;
+}
+
+function buildInpiClass(d) {
+  const num = parseInt(d.classNum) || 35;
+  const desc = INPI_CLASSES[num] || '';
+  const isService = num >= 35;
+  const categoryLabel = isService ? 'Classe de Serviços' : 'Classe de Produtos';
+  return `<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 200px;gap:48px;font-family:'Inter',sans-serif;">
+    <div style="font-size:22px;font-weight:800;color:#0A0A0A;letter-spacing:.12em;text-transform:uppercase;text-align:center;">Classe INPI Considerada</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:24px;max-width:1100px;width:100%;text-align:center;">
+      <div style="font-size:80px;font-weight:800;color:#0A0A0A;line-height:1;">${num.toString().padStart(2,'0')}</div>
+      <div style="width:60px;height:3px;background:#0365f9;border-radius:2px;"></div>
+      <div style="font-size:24px;font-weight:400;color:#444;line-height:1.6;">${esc(desc)}</div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:#999;letter-spacing:.12em;text-transform:uppercase;">${categoryLabel}</div>
+  </div>`;
+}
+
+function buildProcedimentos(d) {
+  const items = [
+    'Brainstorm<br>em grupo',
+    'Árvore de ramificações',
+    'Pesquisa Histórica/Cultural',
+    'Pesquisa Etimológica',
+  ];
+  const circles = items.map(item => `
+    <div style="flex:1;aspect-ratio:1;border-radius:50%;background:#ffffff;border:2px solid #0365f9;display:flex;align-items:center;justify-content:center;padding:32px;box-sizing:border-box;max-width:280px;max-height:280px;">
+      <div style="font-family:'Inter',sans-serif;font-size:24px;font-weight:700;color:#0A0A0A;text-align:center;line-height:1.3;">${item}</div>
+    </div>`).join('');
+  return `<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 120px;gap:64px;font-family:'Inter',sans-serif;">
+    <div style="font-size:22px;font-weight:800;color:#0A0A0A;letter-spacing:.12em;text-transform:uppercase;text-align:center;">Procedimentos para Geração de Alternativas</div>
+    <div style="display:flex;gap:32px;align-items:center;justify-content:center;width:100%;">${circles}</div>
+  </div>`;
+}
+
+function buildMandamentos(d) {
+  const items = [
+    'Mantenha a mente aberta.',
+    'Não censure ideias: quanto mais opções, melhor.',
+    'Espere ver mais nomes ruins do que bons.',
+    'Não se apegue. Muitos serão descartados.',
+    'Bons nomes podem soar estranhos no início.',
+    'Nenhum nome nasce perfeito. Ele ainda não tem rosto e história.',
+    'Decida com base em critérios técnicos, não apenas em gosto pessoal.',
+  ];
+  const rows = items.map((item, i) => `
+    <div style="display:flex;align-items:baseline;gap:28px;padding:20px 0;border-bottom:1px solid #E8E7E2;">
+      <div style="font-size:42px;font-weight:800;color:#0365f9;line-height:1;flex-shrink:0;width:52px;text-align:right;">${i+1}</div>
+      <div style="font-size:22px;font-weight:400;color:#0A0A0A;line-height:1.35;">${item}</div>
+    </div>`).join('');
+  return `<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;justify-content:center;padding:72px 140px;gap:0;font-family:'Inter',sans-serif;">
+    <div style="font-size:22px;font-weight:800;color:#0A0A0A;letter-spacing:.12em;text-transform:uppercase;text-align:center;margin-bottom:32px;">Os 7 Mandamentos da Etapa de Alternativas</div>
+    <div>${rows}</div>
+  </div>`;
+}
+
+function buildQualifiedGen(d) {
+  const icons = [
+    // Link2
+    '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0365f9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7a5 5 0 0 1 0-10h2"/><path d="M15 7h2a5 5 0 0 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+    // ArrowLeftRight
+    '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0365f9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 8 21 12 17 16"/><line x1="3" y1="12" x2="21" y2="12"/><polyline points="7 8 3 12 7 16"/></svg>',
+    // Hourglass
+    '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0365f9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>',
+    // Type
+    '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0365f9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>',
+    // Sparkles
+    '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0365f9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.88 5.76a1 1 0 0 0 .95.69H21l-4.94 3.58a1 1 0 0 0-.36 1.12L17.56 20 12 16.18 6.44 20l1.86-5.85a1 1 0 0 0-.36-1.12L3 9.45h6.17a1 1 0 0 0 .95-.69L12 3z"/></svg>',
+  ];
+  const items = [
+    { num:'01', title:'Pesquisa por Relação Direta', desc:'Busca de palavras com significado atrelado ao negócio e/ou visão da empresa.' },
+    { num:'02', title:'Pesquisa por Sinônimos', desc:'Uso de ferramentas online para geração de sinônimos e palavras-relacionadas.' },
+    { num:'03', title:'Pesquisa por Condição Histórica', desc:'Busca por simbologias, histórias relatadas e associação cultural e linguística.' },
+    { num:'04', title:'Etimologia Gramatical', desc:'Busca por etimologia das palavras, análise de prefixos e sufixos e fusões.' },
+    { num:'05', title:'Associação Indireta', desc:'Brainstorm de associação de palavras que tenham associação indireta com o significado desejado.' },
+  ];
+  const cols = items.map((it, i) => `
+    <div style="flex:1;border-left:3px solid #0365f9;padding:20px 24px;background:#ffffff;border-radius:0 8px 8px 0;display:flex;flex-direction:column;gap:14px;">
+      <div style="width:42px;height:42px;">${icons[i].replace('width="32" height="32"','width="42" height="42"')}</div>
+      <div style="font-size:22px;font-weight:800;color:#0A0A0A;line-height:1.2;">${it.title}</div>
+      <div style="font-size:17px;font-weight:400;color:#555;line-height:1.55;">${it.desc}</div>
+    </div>`).join('');
+  return `<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 100px;gap:52px;font-family:'Inter',sans-serif;">
+    <div style="font-size:22px;font-weight:800;color:#0A0A0A;letter-spacing:.12em;text-transform:uppercase;text-align:center;">Geração Qualificada</div>
+    <div style="display:flex;gap:20px;align-items:stretch;width:100%;">${cols}</div>
+  </div>`;
+}
+
+function buildMethodology(d) {
+  const activeStep = d.activeStep || 1; // 1-based index of the black box
+  const etapas = [
+    {num:'01', desc:'Definição do briefing'},
+    {num:'02', desc:'Geração de Alternativas'},
+    {num:'03', desc:'Avaliação Prévia'},
+    {num:'04', desc:'Análise de viabilidade no INPI e www.'},
+    {num:'05', desc:'Matriz de avaliação com o cliente'},
+    {num:'06', desc:'Escolha do nome junto ao cliente'},
+  ];
+  const items = etapas.map((e, i) => {
+    const isActive = (i + 1) === activeStep;
+    const bg = isActive ? '#0A0A0A' : '#0365f9';
+    const isLast = i === etapas.length - 1;
+    const arrow = isLast ? '' :
+      '<div style="font-size:32px;color:#0A0A0A;flex-shrink:0;align-self:flex-start;margin-top:22px;line-height:1;">→</div>';
+    return `<div style="display:flex;align-items:flex-start;gap:16px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;width:150px;">
+        <div style="background:${bg};border-radius:50px;padding:18px 12px;text-align:center;width:100%;box-sizing:border-box;">
+          <div style="font-family:'Inter',sans-serif;font-size:17px;font-weight:800;color:#ffffff;letter-spacing:.08em;white-space:nowrap;">ETAPA ${e.num}</div>
+        </div>
+        <div style="font-family:'Inter',sans-serif;font-size:17px;font-weight:400;color:#0A0A0A;text-align:center;line-height:1.45;">${e.desc}</div>
+      </div>
+      ${arrow}
+    </div>`;
+  }).join('');
+
+  return `<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 100px;gap:56px;font-family:'Inter',sans-serif;">
+    <div style="font-size:22px;font-weight:800;color:#0A0A0A;letter-spacing:.12em;text-transform:uppercase;text-align:center;">Apresentação das Etapas — Metodologia</div>
+    <div style="display:flex;align-items:flex-start;gap:12px;">${items}</div>
+  </div>`;
+}
+
 function buildColorCards(colors, isDark) {
   const tc = isDark ? '#FAFAF8' : '#0A0A0A';
   const tcs = isDark ? 'rgba(255,255,255,.5)' : '#666666';
@@ -1401,6 +1831,71 @@ function renderPanel(slide, idx) {
     case 'images': body.innerHTML = pImages(slide.data, idx); break;
     case 'textslide': body.innerHTML = pTextslide(slide.data, idx); break;
     case 'mockups': body.innerHTML = pMockups(slide.data, idx); break;
+    case 'qualifiedgen':
+      body.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--g400);">Slide fixo — conteúdo pré-definido.</div>';
+      break;
+    case 'mandamentos':
+      body.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--g400);">Slide fixo — conteúdo pré-definido.</div>';
+      break;
+    case 'filtros':
+      body.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--g400);">Slide fixo — conteúdo pré-definido.</div>';
+      break;
+    case 'procedimentos':
+      body.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--g400);">Slide fixo — conteúdo pré-definido.</div>';
+      break;
+    case 'condicaohistorica':
+      body.innerHTML = `<div style="padding:4px 0;">
+        ${fi('Nome do Slide','f_slideName',slides[idx].name)}
+        <div class="field-section">Conteúdo <span style="font-size:9px;color:#C8B89A;">· editar no Briefing</span></div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="switchTab('briefing')">→ Ir ao Briefing</button>
+      </div>`;
+      break;
+    case 'methodology':
+      body.innerHTML = `<div style="padding:4px 0;">
+        ${fi('Nome do Slide','f_slideName',slides[idx].name)}
+        <div class="field-section">Etapa em destaque (preto)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+          ${[1,2,3,4,5,6].map(n=>`<button class="btn btn-sm ${slides[idx].data.activeStep===n?'btn-accent':'btn-ghost'}" onclick="setMethodologyStep(${idx},${n})" style="flex:1;min-width:40px;">${n}</button>`).join('')}
+        </div>
+      </div>`;
+      break;
+    case 'sinaleira':
+      body.innerHTML = (() => {
+        const t40s = slides.find(s => s.type === 'top40');
+        const fins = t40s ? (t40s.data.words || []).filter(w => w.kept && w.text) : [];
+        if (!fins.length) return '<div style="padding:12px;font-size:12px;color:var(--g400);">Nenhum finalista marcado no Top 40.</div>';
+        const rowsH = fins.map((w) => {
+          const row = (slides[idx].data.rows && slides[idx].data.rows[w.text]) || {};
+          const cb = (field, color) => {
+            const active = row[field+'Color']===color ? 'outline:2px solid #0365f9;outline-offset:1px;' : '';
+            const bg = color==='green'?'#a8e6b0':color==='yellow'?'#f5d87a':'#f09090';
+            return `<button style="width:18px;height:18px;border-radius:50%;background:${bg};${active}border:none;cursor:pointer;flex-shrink:0;" onclick="setSinColor(${idx},'${esc(w.text)}','${field}','${color}')"></button>`;
+          };
+          return `<div style="border:1px solid var(--g200);border-radius:6px;padding:8px;margin-bottom:8px;background:var(--g100);">
+            <div style="font-size:11px;font-weight:700;margin-bottom:6px;">${esc(w.text)}</div>
+            <div style="font-size:10px;color:var(--g400);margin-bottom:2px;">.COM.BR</div>
+            <div style="display:flex;gap:4px;align-items:center;margin-bottom:5px;">
+              <input class="field-input" style="flex:1;font-size:11px;padding:3px 6px;" placeholder="Ex: Não disponível" value="${esc(row.combrText||'')}" oninput="setSinText(${idx},'${esc(w.text)}','combr',this.value)">
+              ${cb('combr','green')}${cb('combr','yellow')}${cb('combr','red')}
+            </div>
+            <div style="font-size:10px;color:var(--g400);margin-bottom:2px;">INPI</div>
+            <div style="display:flex;gap:4px;align-items:center;margin-bottom:5px;">
+              <input class="field-input" style="flex:1;font-size:11px;padding:3px 6px;" placeholder="Ex: Livre na classe" value="${esc(row.inpiText||'')}" oninput="setSinText(${idx},'${esc(w.text)}','inpi',this.value)">
+              ${cb('inpi','green')}${cb('inpi','yellow')}${cb('inpi','red')}
+            </div>
+            <div style="font-size:10px;color:var(--g400);margin-bottom:2px;">STATUS</div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <input class="field-input" style="flex:1;font-size:11px;padding:3px 6px;" placeholder="Ex: APTA" value="${esc(row.statusText||'')}" oninput="setSinText(${idx},'${esc(w.text)}','status',this.value)">
+              ${cb('status','green')}${cb('status','yellow')}${cb('status','red')}
+            </div>
+          </div>`;
+        }).join('');
+        return `<div style="padding:4px 0;">${fi('Nome do Slide','f_slideName',slides[idx].name)}<div class="field-section">Dados da Tabela</div>${rowsH}</div>`;
+      })();
+      break;
+    case 'finalistas':
+      body.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--g400);">Slide fixo — conteúdo pré-definido.</div>';
+      break;
     case 'final': body.innerHTML = pFinal(slide.data, idx); break;
     default: body.innerHTML = '<p style="color:#9B9A94;font-size:12px;">Sem propriedades.</p>';
   }
@@ -1723,6 +2218,19 @@ function attachListeners(slide, idx) {
     case 'typography': bindName('f_slideName', idx); break;
     case 'images': bindName('f_slideName', idx); break;
     case 'mockups': bindName('f_slideName', idx); break;
+    case 'methodology': bindName('f_slideName', idx); break;
+    case 'qualifiedgen': break;
+    case 'mandamentos': break;
+    case 'procedimentos': break;
+    case 'filtros': break;
+    case 'sinaleira':
+      bindName('f_slideName', idx);
+      break;
+    case 'finalistas': break;
+    case 'inpiclass': bindName('f_slideName', idx); break;
+    case 'top40': bindName('f_slideName', idx); break;
+    case 'riscados': bindName('f_slideName', idx); break;
+    case 'condicaohistorica': bindName('f_slideName', idx); break;
     case 'textslide':
       bindName('f_slideName', idx);
       bind('f_ts_title', 'title');
@@ -2069,6 +2577,12 @@ function removeMockup(slideIdx, imgIdx) {
   slides[slideIdx].data.images.splice(imgIdx, 1);
   renderPanel(slides[slideIdx], slideIdx); refreshPreview();
 }
+function setMethodologyStep(idx, step) {
+  slides[idx].data.activeStep = step;
+  renderPanel(slides[idx], idx);
+  refreshPreview();
+}
+
 function setLayout(idx,val) { slides[idx].data.layout=val; renderPanel(slides[idx],idx); refreshPreview(); }
 
 // ════════════════════════════════
@@ -2468,6 +2982,33 @@ const PROJECT_HIDDEN_BRIEFING = {
            'bSectionCores','bSectionMockups']
 };
 
+function bApplyBriefingVisibility(type) {
+  // Only show/hide briefing sections — does NOT recreate slides
+  ['bSectionConstSimbolo','bSectionTipografia','bSectionConstTipografia',
+   'bSectionCores','bSectionMockups'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = '';
+  });
+  (PROJECT_HIDDEN_BRIEFING[type] || []).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  const oldSec = document.getElementById('bOldColorsSection');
+  if (oldSec) oldSec.style.display = type === 'redesign' ? 'block' : 'none';
+  const condSec = document.getElementById('bSectionCondicaoHistorica');
+  if (condSec) condSec.style.display = type === 'naming' ? 'block' : 'none';
+  const top40Sec = document.getElementById('bSectionTop40');
+  if (top40Sec) top40Sec.style.display = type === 'naming' ? 'block' : 'none';
+  const inpiSec2 = document.getElementById('bSectionInpi');
+  if (inpiSec2) inpiSec2.style.display = type === 'naming' ? 'block' : 'none';
+  if (type === 'naming') {
+    const _inpiS = slides.find(s => s.type === 'inpiclass');
+    bPopulateInpiSelect(_inpiS ? _inpiS.data.classNum : 35);
+  }
+  const inpiSec = document.getElementById('bSectionInpi');
+  if (inpiSec) inpiSec.style.display = type === 'naming' ? 'block' : 'none';
+}
+
 function applyProjectTypeVisibility(type) {
   // ── Restore previously removed naming slides ──────────────────────────────
   if (_namingRemovedSlides && _namingRemovedSlides.length > 0) {
@@ -2479,6 +3020,11 @@ function applyProjectTypeVisibility(type) {
   }
 
   // ── Remove slides for naming ──────────────────────────────────────────────
+  // Save condicaohistorica text before removing naming slides
+  const _savedCondicaoText = (slides.find(s => s.type === 'condicaohistorica')?.data?.text) || '';
+  // Also remove any previously added naming-specific slides
+  slides = slides.filter(s => s._namingOnly !== true);
+
   if (type === 'naming') {
     _namingRemovedSlides = [];
     // Collect indices to remove (in reverse to splice safely)
@@ -2492,6 +3038,66 @@ function applyProjectTypeVisibility(type) {
       _namingRemovedSlides.unshift({slide: slides[i], originalIndex: i});
       slides.splice(i, 1);
     });
+    // Insert naming-specific slides in correct positions
+    // Order: Capa, Índice, Etapas(01), Posicionamento, Painel, Etapas(02), Final
+    const indexPos = slides.findIndex(s => s.type === 'index');
+    const brandPos = slides.findIndex(s => s.type === 'brand');
+    // Etapas slide 1 (activeStep:1) — after index
+    const meth1 = { ...dc(DEFAULTS.methodology), name:'Etapas da Metodologia', showInIndex:true, _namingOnly: true, data:{ activeStep:1 } };
+    // Etapas slide 2 (activeStep:2) — after brand (Painel de Marca)
+    const meth2 = { ...dc(DEFAULTS.methodology), name:'Etapas da Metodologia', showInIndex:true, _namingOnly: true, data:{ activeStep:2 } };
+    // Insert in reverse order to preserve positions
+    const qualGen = { ...dc(DEFAULTS.qualifiedgen), _namingOnly: true };
+    const mandSlide = { ...dc(DEFAULTS.mandamentos), _namingOnly: true };
+    const procSlide = { ...dc(DEFAULTS.procedimentos), _namingOnly: true };
+    const condSlide = { ...dc(DEFAULTS.condicaohistorica), _namingOnly: true, data: { text: _savedCondicaoText } };
+    const meth3 = { ...dc(DEFAULTS.methodology), name:'Etapas da Metodologia', showInIndex:true, _namingOnly: true, data:{ activeStep:3 } };
+    // Preserve top40 words across re-renders
+    const _existingTop40 = slides.find(s => s.type === 'top40');
+    const _savedWords = _existingTop40
+      ? JSON.parse(JSON.stringify(_existingTop40.data.words))
+      : Array.from({length:40}, () => ({text:'', kept:false}));
+    // Also check briefing inputs as fallback (in case slides were already removed)
+    const bTop40Els = document.querySelectorAll('#bTop40List input[type="text"], #bTop40List input:not([type="checkbox"])');
+    const bTop40Checks = document.querySelectorAll('#bTop40List input[type="checkbox"]');
+    if (bTop40Els.length === 40) {
+      bTop40Els.forEach((el, i) => { _savedWords[i].text = el.value; });
+      bTop40Checks.forEach((el, i) => { _savedWords[i].kept = el.checked; });
+    }
+    const top40Slide = { ...dc(DEFAULTS.top40), _namingOnly: true, data: { words: _savedWords } };
+    const filtrosSlide = { ...dc(DEFAULTS.filtros), _namingOnly: true };
+    const riscadosSlide = { ...dc(DEFAULTS.riscados), _namingOnly: true, data: { words: _savedWords } };
+    const meth4 = { ...dc(DEFAULTS.methodology), name:'Etapas da Metodologia', showInIndex:true, _namingOnly: true, data:{ activeStep:4 } };
+    const meth5 = { ...dc(DEFAULTS.methodology), name:'Etapas da Metodologia', showInIndex:true, _namingOnly: true, data:{ activeStep:5 } };
+    const meth6 = { ...dc(DEFAULTS.methodology), name:'Etapas da Metodologia', showInIndex:true, _namingOnly: true, data:{ activeStep:6 } };
+    if (brandPos >= 0) {
+      // Insert in reverse order — last inserted appears last
+      // Preserve INPI class number
+      const _existingInpi = slides.find(s => s.type === 'inpiclass');
+      const _savedInpiClass = _existingInpi ? _existingInpi.data.classNum : 35;
+      const inpiSlide = { ...dc(DEFAULTS.inpiclass), _namingOnly: true, data: { classNum: _savedInpiClass } };
+      // Preserve sinaleira data
+      const _existingSinaleira = slides.find(s => s.type === 'sinaleira');
+      const _savedSinRows = _existingSinaleira ? JSON.parse(JSON.stringify(_existingSinaleira.data.rows||{})) : {};
+      const sineiraSlide = { ...dc(DEFAULTS.sinaleira), _namingOnly: true, data: { rows: _savedSinRows } };
+      const finalistasSlide = { ...dc(DEFAULTS.finalistas), _namingOnly: true };
+      slides.splice(brandPos + 1, 0, meth6);
+      slides.splice(brandPos + 1, 0, finalistasSlide);
+      slides.splice(brandPos + 1, 0, meth5);
+      slides.splice(brandPos + 1, 0, sineiraSlide);
+      slides.splice(brandPos + 1, 0, inpiSlide);
+      slides.splice(brandPos + 1, 0, meth4);
+      slides.splice(brandPos + 1, 0, riscadosSlide);
+      slides.splice(brandPos + 1, 0, filtrosSlide);
+      slides.splice(brandPos + 1, 0, top40Slide);
+      slides.splice(brandPos + 1, 0, meth3);
+      slides.splice(brandPos + 1, 0, condSlide);
+      slides.splice(brandPos + 1, 0, procSlide);
+      slides.splice(brandPos + 1, 0, mandSlide);
+      slides.splice(brandPos + 1, 0, qualGen);
+      slides.splice(brandPos + 1, 0, meth2);
+    }
+    slides.splice(indexPos + 1, 0, meth1);
   }
 
   // ── Reset all remaining slides to visible ─────────────────────────────────
@@ -2511,6 +3117,22 @@ function applyProjectTypeVisibility(type) {
   // ── Old colors section (redesign only) ────────────────────────────────────
   const oldSec = document.getElementById('bOldColorsSection');
   if (oldSec) oldSec.style.display = type === 'redesign' ? 'block' : 'none';
+
+  // ── Naming-only briefing sections ────────────────────────────────────────
+  ['bSectionCondicaoHistorica','bSectionTop40','bSectionInpi'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = type === 'naming' ? 'block' : 'none';
+  });
+  if (type === 'naming') {
+    const _inpiForApply = slides.find(s => s.type === 'inpiclass');
+    bPopulateInpiSelect(_inpiForApply ? _inpiForApply.data.classNum : 35);
+  }
+
+  // ── Naming-only briefing sections ────────────────────────────────────────
+  const condSec = document.getElementById('bSectionCondicaoHistorica');
+  if (condSec) condSec.style.display = type === 'naming' ? 'block' : 'none';
+  const top40Sec = document.getElementById('bSectionTop40');
+  if (top40Sec) top40Sec.style.display = type === 'naming' ? 'block' : 'none';
 
   recomputeSubcoverNumbers();
   // Reset selection to first slide safely
@@ -2538,6 +3160,13 @@ function bSetProjectType(type) {
   applyProjectTypeVisibility(type);
   renderThumbList();
   selectViewSlide(0);
+  // Render briefing-only lists that depend on naming slides
+  bRenderTop40();
+  const inpiSlideFound2 = slides.find(s => s.type === 'inpiclass');
+  bPopulateInpiSelect(inpiSlideFound2 ? inpiSlideFound2.data.classNum : 35);
+  const cSlide2 = slides.find(s => s.type === 'condicaohistorica');
+  const cEl2 = document.getElementById('b_condicaoText');
+  if (cSlide2 && cEl2) cEl2.value = cSlide2.data.text || '';
 }
 
 function bAddOldColor() {
@@ -2622,7 +3251,8 @@ function bPopulate() {
   const ptype = (bGetCover()) ? (bGetCover().data.projectType || 'brand') : 'brand';
   const radios = document.querySelectorAll('input[name="b_projectType"]');
   radios.forEach(r => { r.checked = r.value === ptype; });
-  applyProjectTypeVisibility(ptype);
+  // Only apply section visibility (not slide recreation) when populating briefing
+  bApplyBriefingVisibility(ptype);
   // Textslide texts
   const symbolSlides = slides.filter(s => s.type === 'textslide' && s.name === 'Construção do Símbolo');
   const typoSlides2 = slides.filter(s => s.type === 'textslide' && s.name === 'Construção da Tipografia');
@@ -2631,6 +3261,11 @@ function bPopulate() {
   bRenderTextslideImgList('symbol');
   bRenderTextslideImgList('typo');
   bRenderMockupList();
+  // Restore condição histórica text
+  const cSlide = slides.find(s => s.type === 'condicaohistorica');
+  const cEl = document.getElementById('b_condicaoText');
+  if (cSlide && cEl) cEl.value = cSlide.data.text || '';
+  bRenderTop40();
 }
 
 function bSet(id, val) {
@@ -3210,6 +3845,105 @@ function bBindInputs() {
 init();
 // Wait for layout to compute before fitting zoom
 requestAnimationFrame(() => { requestAnimationFrame(fitZoom); });
+
+
+function bRenderTop40() {
+  const list = document.getElementById('bTop40List');
+  if (!list) return;
+  const t40 = slides.find(s => s.type === 'top40');
+  if (!t40) { list.innerHTML = ''; return; }
+  const words = t40.data.words;
+  // Build 4 columns of 10
+  const cols = [0,1,2,3].map(ci => {
+    const rows = words.slice(ci*10, (ci+1)*10).map((w, j) => {
+      const i = ci*10 + j;
+      const checked = w.kept ? 'checked' : '';
+      const textColor = w.kept ? '#0A0A0A' : '#D45A3A';
+      const decoration = w.kept ? 'none' : 'line-through';
+      return '<div style="display:flex;align-items:center;gap:5px;padding:3px 0;border-bottom:1px solid var(--g200);">' +
+        '<span style="font-size:10px;color:#999;min-width:18px;text-align:right;flex-shrink:0;">' + (i+1) + '</span>' +
+        '<input type="checkbox" ' + checked + ' onchange="bToggleTop40Keep(' + i + ',this.checked)" style="accent-color:#0365f9;flex-shrink:0;">' +
+        '<input class="brief-input" style="flex:1;padding:4px 6px;font-size:12px;color:' + textColor + ';min-width:0;" ' +
+          'placeholder="' + (i+1) + '" value="' + (w.text||'').replace(/"/g,'&quot;') + '" ' +
+          'oninput="bUpdateTop40Word(' + i + ',this.value)">' +
+      '</div>';
+    }).join('');
+    return '<div style="flex:1;min-width:0;">' + rows + '</div>';
+  }).join('');
+  list.innerHTML = '<div style="display:flex;gap:12px;">' + cols + '</div>';
+  bUpdateTop40Counter();
+}
+
+function bUpdateTop40Word(i, val) {
+  const t40 = slides.find(s => s.type === 'top40');
+  const r40 = slides.find(s => s.type === 'riscados');
+  if (t40) t40.data.words[i].text = val;
+  if (r40) r40.data.words[i].text = val;
+  refreshPreview();
+}
+
+function bUpdateTop40Counter() {
+  const t40 = slides.find(s => s.type === 'top40');
+  const counter = document.getElementById('top40Counter');
+  if (!counter || !t40) return;
+  const count = (t40.data.words || []).filter(w => w.kept && w.text).length;
+  counter.textContent = count + ' finalista' + (count !== 1 ? 's' : '');
+  counter.style.background = count > 0 ? '#e8f0fe' : '#f0efe9';
+  counter.style.color = count > 0 ? '#0365f9' : '#9B9A94';
+}
+
+function bToggleTop40Keep(i, kept) {
+  const t40 = slides.find(s => s.type === 'top40');
+  const r40 = slides.find(s => s.type === 'riscados');
+  if (t40) t40.data.words[i].kept = kept;
+  if (r40) r40.data.words[i].kept = kept;
+  bRenderTop40();
+  bUpdateTop40Counter();
+  refreshPreview();
+}
+function bPopulateInpiSelect(selectedNum) {
+  const sel = document.getElementById('b_inpiClass');
+  if (!sel || typeof INPI_CLASSES === 'undefined') return;
+  // Always rebuild to ensure fresh state
+  sel.innerHTML = '';
+  for (let n = 1; n <= 45; n++) {
+    const desc = (INPI_CLASSES[n] || '').slice(0, 65);
+    const opt = document.createElement('option');
+    opt.value = n;
+    opt.textContent = n.toString().padStart(2,'0') + ' — ' + desc + '...';
+    sel.appendChild(opt);
+  }
+  sel.value = selectedNum || 35;
+}
+
+function bSyncInpiClass(val) {
+  const inpi = slides.find(s => s.type === 'inpiclass');
+  if (inpi) { inpi.data.classNum = parseInt(val); refreshPreview(); }
+}
+
+function setSinText(slideIdx, name, field, val) {
+  const s = slides[slideIdx]; if (!s) return;
+  if (!s.data.rows) s.data.rows = {};
+  if (!s.data.rows[name]) s.data.rows[name] = {};
+  s.data.rows[name][field+'Text'] = val;
+  refreshPreview();
+}
+function setSinColor(slideIdx, name, field, color) {
+  const s = slides[slideIdx]; if (!s) return;
+  if (!s.data.rows) s.data.rows = {};
+  if (!s.data.rows[name]) s.data.rows[name] = {};
+  // Toggle off if same color
+  s.data.rows[name][field+'Color'] = s.data.rows[name][field+'Color'] === color ? '' : color;
+  renderPanel(s, slideIdx);
+  refreshPreview();
+}
+
+function bSyncCondicaoHistorica() {
+  const el = document.getElementById('b_condicaoText');
+  if (!el) return;
+  const cSlide = slides.find(s => s.type === 'condicaohistorica');
+  if (cSlide) { cSlide.data.text = el.value; refreshPreview(); }
+}
 </script>
 </body>
 </html>
