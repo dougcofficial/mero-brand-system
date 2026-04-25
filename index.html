@@ -894,6 +894,7 @@ const DEFAULTS = {
   sinaleira:{ type:'sinaleira', name:'Sinaleira de Viabilidade', visible:true, data:{ rows:{} } },
   finalistas:{ type:'finalistas', name:'Finalistas', visible:true, data:{} },
   matrizaval:{ type:'matrizaval', name:'Matriz de Avaliação', visible:true, data:{} },
+  funil:{ type:'funil', name:'Funil', visible:true, data:{ totalGerados: 297 } },
   nomeTeaser:{ type:'nomeTeaser', name:'Teaser', visible:true, data:{ image:null, frase:'' } },
   nomeApres:{ type:'nomeApres', name:'Apresentação', visible:true, data:{ nome:'', significado:'', positivos:'', combr:'', status:'' } },
   final:{ type:'final', name:'Slide Final', visible:true, data:{ brandName:'Mero', contact:'Rua Duque de Caxias, 1170\nLajeado/RS\ncontato@mero.com.br\nwww.mero.com.br', bgColor:'#0365f9', textColor:'#ffffff' }}
@@ -1063,7 +1064,7 @@ function getViewList() {
 }
 
 function thumbBg(s) {
-  const m = {cover:'#0365f9',index:'#1a1a18',subcover:s.data?.bgColor||'#FAFAF8',brand:'#FAFAF8',typography:'#000000',colors:s.data?.bgColor||'#FAFAF8',images:'#CCCCCC',textslide:'#FAFAF8',mockups:'#222222',methodology:'#FAFAF8',qualifiedgen:'#FAFAF8',mandamentos:'#FAFAF8',procedimentos:'#FAFAF8',condicaohistorica:'#FAFAF8',inpiclass:'#FAFAF8',filtros:'#FAFAF8',sinaleira:'#FAFAF8',finalistas:'#0A0A0A',matrizaval:'#DADAD5',nomeTeaser:'#0A0A0A',nomeApres:'#0A0A0A',top40:'#FAFAF8',riscados:'#FAFAF8',final:s.data?.bgColor||'#0365f9'};
+  const m = {cover:'#0365f9',index:'#1a1a18',subcover:s.data?.bgColor||'#FAFAF8',brand:'#FAFAF8',typography:'#000000',colors:s.data?.bgColor||'#FAFAF8',images:'#CCCCCC',textslide:'#FAFAF8',mockups:'#222222',methodology:'#FAFAF8',qualifiedgen:'#FAFAF8',mandamentos:'#FAFAF8',procedimentos:'#FAFAF8',condicaohistorica:'#FAFAF8',inpiclass:'#FAFAF8',filtros:'#FAFAF8',sinaleira:'#FAFAF8',finalistas:'#0A0A0A',matrizaval:'#DADAD5',funil:'#0A0A0A',nomeTeaser:'#0A0A0A',nomeApres:'#0A0A0A',top40:'#FAFAF8',riscados:'#FAFAF8',final:s.data?.bgColor||'#0365f9'};
   return m[s.type]||'#EEE';
 }
 
@@ -1144,6 +1145,7 @@ function buildSlide(slide, idx) {
       case 'sinaleira': return buildSinaleira(slide.data);
       case 'finalistas': return buildFinalistas(slide.data);
       case 'matrizaval': return buildMatrizAval(slide.data);
+      case 'funil': return buildFunil(slide.data, idx);
       case 'nomeTeaser': return buildNomeTeaser(slide.data);
       case 'nomeApres': return buildNomeApres(slide.data);
       case 'filtros': return buildFiltros(slide.data);
@@ -1589,6 +1591,55 @@ function buildNomeApres(d) {
   </div>`;
 }
 
+function buildFunil(d, slideIdx) {
+  const total = d.totalGerados || 297;
+  const showLayers = d.showLayers || 5;
+  const t40 = slides.find(s => s.type === 'top40');
+  const sinS = slides.find(s => s.type === 'sinaleira');
+  const t40All = t40 ? (t40.data.words || []).filter(w => w.kept && w.text) : [];
+  const inpiCount = t40All.length > 0 ? t40All.length : null;
+  const finalistCount = sinS
+    ? (t40All.filter(w => sinS.data.rows && sinS.data.rows[w.text] && sinS.data.rows[w.text].selected).length || null)
+    : null;
+
+  const layers = [
+    { num: total,         label: 'Nomes gerados no total'                       },
+    { num: 40,            label: 'Selecionados para avaliação prévia'            },
+    { num: inpiCount,     label: 'Selecionados para teste de INPI e www.'        },
+    { num: finalistCount, label: 'Passíveis de uso após análise de INPI e www.'  },
+    { num: 1,             label: 'Nome escolhido'                                },
+  ];
+
+  const maxNum = total || 297;
+
+  let rows = '';
+  for (let i = 0; i < layers.length; i++) {
+    const l = layers[i];
+    const showNum = i < showLayers; // only show number if within showLayers
+    const hasData = l.num !== null && l.num !== undefined && l.num !== '';
+    const barPct = hasData ? Math.max(4, Math.round((l.num / maxNum) * 100)) : Math.max(4, Math.round(((5-i)/5) * 80));
+    const fs = i === 0 ? 52 : i === 4 ? 40 : 44;
+    const bh = i === 0 ? 60 : i === 4 ? 44 : 52;
+    const mb = i === layers.length - 1 ? 0 : 18;
+    const numColor = (showNum && hasData) ? '#ffffff' : 'transparent';
+    const labelColor = showNum ? '#ffffff' : '#444';
+    const barColor = showNum ? '#0365f9' : '#1e2a3a';
+    rows += '<div style="display:flex;align-items:center;gap:24px;margin-bottom:' + mb + 'px;">';
+    rows += '<div style="width:80px;text-align:right;font-size:' + fs + 'px;font-weight:800;color:' + numColor + ';line-height:1;flex-shrink:0;">' + (showNum && hasData ? l.num : '') + '</div>';
+    rows += '<div style="flex:1;background:#1a1a1a;border-radius:4px;height:' + bh + 'px;overflow:hidden;">';
+    rows += '<div style="height:100%;width:' + barPct + '%;background:' + barColor + ';border-radius:4px;"></div>';
+    rows += '</div>';
+    rows += '<div style="width:380px;font-size:17px;font-weight:500;color:' + labelColor + ';line-height:1.35;flex-shrink:0;">' + l.label + '</div>';
+    rows += '</div>';
+  }
+
+  return '<div class="slide" style="background:#0A0A0A;display:flex;flex-direction:column;justify-content:center;padding:72px 100px;gap:0;">'
+    + '<div style="font-size:13px;font-weight:700;color:#0365f9;letter-spacing:.18em;text-transform:uppercase;margin-bottom:20px;">Funil de Nomes Desenvolvidos</div>'
+    + '<div style="font-size:38px;font-weight:800;color:#ffffff;letter-spacing:-.01em;margin-bottom:48px;line-height:1.2;">Do universo<br>ao nome certo.</div>'
+    + rows
+    + '</div>';
+}
+
 function buildMatrizAval(d) {
   // Get selected finalists from sinaleira
   const sinSlide = slides.find(s => s.type === 'sinaleira');
@@ -2015,6 +2066,14 @@ function renderPanel(slide, idx) {
     case 'matrizaval':
       body.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--g400);">Slide gerado automaticamente a partir dos finalistas marcados na Sinaleira.</div>';
       break;
+    case 'funil':
+      body.innerHTML = `<div style="padding:4px 0;">
+        ${fi('Nome do Slide','f_slideName',slides[idx].name)}
+        <div class="field-section">Total de nomes gerados</div>
+        ${fi('Número total','f_funil_total',slides[idx].data.totalGerados,'number')}
+        <div style="font-size:11px;color:var(--g400);margin-top:-8px;margin-bottom:12px;">Os demais números são calculados automaticamente.</div>
+      </div>`;
+      break;
     case 'nomeTeaser': {
       const d = slides[idx].data;
       body.innerHTML = `<div style="padding:4px 0;">
@@ -2376,6 +2435,10 @@ function attachListeners(slide, idx) {
       break;
     case 'finalistas': break;
     case 'matrizaval': break;
+    case 'funil':
+      bindName('f_slideName', idx);
+      bind('f_funil_total', 'totalGerados');
+      break;
     case 'nomeTeaser':
       bindName('f_slideName', idx);
       bind('f_nt_frase', 'frase');
@@ -3266,19 +3329,28 @@ function applyProjectTypeVisibility(type) {
       // Restore previously created teaser/apres slides
       _savedTeasers.forEach(s => { s._namingOnly = true; });
       const matrizSlide = { ...dc(DEFAULTS.matrizaval), _namingOnly: true };
+      // Preserve funil totalGerados values
+      const existingFunils = slides.filter(s => s.type === 'funil');
+      const savedFunilTotal = existingFunils.length > 0 ? existingFunils[0].data.totalGerados : 297;
+      const mkFunil = (name, showLayers) => ({ ...dc(DEFAULTS.funil), name, _namingOnly: true, data: { totalGerados: savedFunilTotal, showLayers: showLayers || 5 } });
+
       slides.splice(brandPos + 1, 0, matrizSlide);
       slides.splice(brandPos + 1, 0, meth6);
       // Re-insert saved teaser/apres after meth6
       _savedTeasers.slice().reverse().forEach(s => slides.splice(brandPos + 2, 0, s));
       slides.splice(brandPos + 1, 0, finalistasSlide);
       slides.splice(brandPos + 1, 0, meth5);
+      slides.splice(brandPos + 1, 0, mkFunil('Funil', 5));
       slides.splice(brandPos + 1, 0, sineiraSlide);
       slides.splice(brandPos + 1, 0, inpiSlide);
       slides.splice(brandPos + 1, 0, meth4);
+      slides.splice(brandPos + 1, 0, mkFunil('Funil', 3));
       slides.splice(brandPos + 1, 0, riscadosSlide);
       slides.splice(brandPos + 1, 0, filtrosSlide);
       slides.splice(brandPos + 1, 0, top40Slide);
+      slides.splice(brandPos + 1, 0, mkFunil('Funil', 2));
       slides.splice(brandPos + 1, 0, meth3);
+      slides.splice(brandPos + 1, 0, mkFunil('Funil', 1));
       slides.splice(brandPos + 1, 0, condSlide);
       slides.splice(brandPos + 1, 0, procSlide);
       slides.splice(brandPos + 1, 0, mandSlide);
