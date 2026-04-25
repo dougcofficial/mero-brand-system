@@ -646,9 +646,17 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
         <div class="brief-card">
           <div class="brief-card-title">Classe INPI</div>
           <div class="brief-field">
-            <div class="brief-label">Número da Classe <span style="font-size:9px;color:#9B9A94;">· 01 a 45</span></div>
-            <select class="brief-input" id="b_inpiClass" onchange="bSyncInpiClass(this.value)" style="font-size:14px;"></select>
+            <div class="brief-label">Classe Principal <span style="font-size:9px;color:#9B9A94;">· 01 a 45</span></div>
+            <select class="brief-input" id="b_inpiClass" onchange="bSyncInpiClass()" style="font-size:14px;"></select>
           </div>
+          <div id="bInpiClass2Wrap" style="display:none;">
+            <div class="brief-label" style="margin-top:8px;">Segunda Classe <span style="font-size:9px;color:#9B9A94;">· 01 a 45</span></div>
+            <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+              <select class="brief-input" id="b_inpiClass2" onchange="bSyncInpiClass()" style="font-size:14px;flex:1;"></select>
+              <button class="btn btn-ghost btn-sm" onclick="bRemoveInpiClass2()" style="color:var(--danger);flex-shrink:0;">× Remover</button>
+            </div>
+          </div>
+          <button id="bAddInpiClass2Btn" class="bcolor-add" style="margin-top:8px;" onclick="bAddInpiClass2()">+ Adicionar segunda classe</button>
         </div>
       </div>
     </div>
@@ -831,6 +839,7 @@ textarea.brief-input{resize:vertical;min-height:80px;line-height:1.55;}
 // STATE
 // ════════════════════════════════
 let slides = [];
+let _inpiClassesGlobal = [35]; // single source of truth for INPI classes
 let activeIdx = -1;
 let zoomPct = 42;
 
@@ -889,11 +898,12 @@ const DEFAULTS = {
   condicaohistorica:{ type:'condicaohistorica', name:'Condição Histórica', visible:true, data:{ text:'' } },
   top40:{ type:'top40', name:'Top 40', visible:true, data:{ words: Array.from({length:40}, (_,i) => ({text:'', kept:false})) } },
   riscados:{ type:'riscados', name:'Riscados', visible:true, data:{ words: [] } },
-  inpiclass:{ type:'inpiclass', name:'Classe INPI', visible:true, data:{ classNum: 35 } },
+  inpiclass:{ type:'inpiclass', name:'Classe INPI', visible:true, data:{ classes: [35] } },
   filtros:{ type:'filtros', name:'Tipos de Filtros', visible:true, data:{} },
   sinaleira:{ type:'sinaleira', name:'Sinaleira de Viabilidade', visible:true, data:{ rows:{} } },
   finalistas:{ type:'finalistas', name:'Finalistas', visible:true, data:{} },
   matrizaval:{ type:'matrizaval', name:'Matriz de Avaliação', visible:true, data:{} },
+  tabelacomp:{ type:'tabelacomp', name:'Tabela Comparativa', visible:true, data:{} },
   funil:{ type:'funil', name:'Funil', visible:true, data:{ totalGerados: 297 } },
   nomeTeaser:{ type:'nomeTeaser', name:'Teaser', visible:true, data:{ image:null, frase:'' } },
   nomeApres:{ type:'nomeApres', name:'Apresentação', visible:true, data:{ nome:'', significado:'', positivos:'', combr:'', status:'' } },
@@ -1064,7 +1074,7 @@ function getViewList() {
 }
 
 function thumbBg(s) {
-  const m = {cover:'#0365f9',index:'#1a1a18',subcover:s.data?.bgColor||'#FAFAF8',brand:'#FAFAF8',typography:'#000000',colors:s.data?.bgColor||'#FAFAF8',images:'#CCCCCC',textslide:'#FAFAF8',mockups:'#222222',methodology:'#FAFAF8',qualifiedgen:'#FAFAF8',mandamentos:'#FAFAF8',procedimentos:'#FAFAF8',condicaohistorica:'#FAFAF8',inpiclass:'#FAFAF8',filtros:'#FAFAF8',sinaleira:'#FAFAF8',finalistas:'#0A0A0A',matrizaval:'#DADAD5',funil:'#0A0A0A',nomeTeaser:'#0A0A0A',nomeApres:'#0A0A0A',top40:'#FAFAF8',riscados:'#FAFAF8',final:s.data?.bgColor||'#0365f9'};
+  const m = {cover:'#0365f9',index:'#1a1a18',subcover:s.data?.bgColor||'#FAFAF8',brand:'#FAFAF8',typography:'#000000',colors:s.data?.bgColor||'#FAFAF8',images:'#CCCCCC',textslide:'#FAFAF8',mockups:'#222222',methodology:'#FAFAF8',qualifiedgen:'#FAFAF8',mandamentos:'#FAFAF8',procedimentos:'#FAFAF8',condicaohistorica:'#FAFAF8',inpiclass:'#FAFAF8',filtros:'#FAFAF8',sinaleira:'#FAFAF8',finalistas:'#0A0A0A',matrizaval:'#DADAD5',tabelacomp:'#FAFAF8',funil:'#0A0A0A',nomeTeaser:'#0A0A0A',nomeApres:'#0A0A0A',top40:'#FAFAF8',riscados:'#FAFAF8',final:s.data?.bgColor||'#0365f9'};
   return m[s.type]||'#EEE';
 }
 
@@ -1145,6 +1155,7 @@ function buildSlide(slide, idx) {
       case 'sinaleira': return buildSinaleira(slide.data);
       case 'finalistas': return buildFinalistas(slide.data);
       case 'matrizaval': return buildMatrizAval(slide.data);
+      case 'tabelacomp': return buildTabelaComp(slide.data);
       case 'funil': return buildFunil(slide.data, idx);
       case 'nomeTeaser': return buildNomeTeaser(slide.data);
       case 'nomeApres': return buildNomeApres(slide.data);
@@ -1603,40 +1614,334 @@ function buildFunil(d, slideIdx) {
     : null;
 
   const layers = [
-    { num: total,         label: 'Nomes gerados no total'                       },
-    { num: 40,            label: 'Selecionados para avaliação prévia'            },
-    { num: inpiCount,     label: 'Selecionados para teste de INPI e www.'        },
-    { num: finalistCount, label: 'Passíveis de uso após análise de INPI e www.'  },
-    { num: 1,             label: 'Nome escolhido'                                },
+    { num: total,         label: 'Nomes gerados no total',                      bg: '#0365f9', w: '600px', fs: 42, pad: '22px 28px' },
+    { num: 40,            label: 'Selecionados para avaliação prévia',           bg: '#0a4aa3', w: '520px', fs: 36, pad: '19px 28px' },
+    { num: inpiCount,     label: 'Selecionados para teste de INPI e www.',       bg: '#083d8a', w: '440px', fs: 30, pad: '16px 28px' },
+    { num: finalistCount, label: 'Passíveis de uso após análise de INPI e www.', bg: '#062e6b', w: '360px', fs: 26, pad: '14px 28px' },
+    { num: 1,             label: 'Nome escolhido',                               bg: '#041f4a', w: '280px', fs: 22, pad: '12px 28px' },
   ];
-
-  const maxNum = total || 297;
 
   let rows = '';
   for (let i = 0; i < layers.length; i++) {
     const l = layers[i];
-    const showNum = i < showLayers; // only show number if within showLayers
-    const hasData = l.num !== null && l.num !== undefined && l.num !== '';
-    const barPct = hasData ? Math.max(4, Math.round((l.num / maxNum) * 100)) : Math.max(4, Math.round(((5-i)/5) * 80));
-    const fs = i === 0 ? 52 : i === 4 ? 40 : 44;
-    const bh = i === 0 ? 60 : i === 4 ? 44 : 52;
-    const mb = i === layers.length - 1 ? 0 : 18;
-    const numColor = (showNum && hasData) ? '#ffffff' : 'transparent';
-    const labelColor = showNum ? '#ffffff' : '#444';
-    const barColor = showNum ? '#0365f9' : '#1e2a3a';
-    rows += '<div style="display:flex;align-items:center;gap:24px;margin-bottom:' + mb + 'px;">';
-    rows += '<div style="width:80px;text-align:right;font-size:' + fs + 'px;font-weight:800;color:' + numColor + ';line-height:1;flex-shrink:0;">' + (showNum && hasData ? l.num : '') + '</div>';
-    rows += '<div style="flex:1;background:#1a1a1a;border-radius:4px;height:' + bh + 'px;overflow:hidden;">';
-    rows += '<div style="height:100%;width:' + barPct + '%;background:' + barColor + ';border-radius:4px;"></div>';
-    rows += '</div>';
-    rows += '<div style="width:380px;font-size:17px;font-weight:500;color:' + labelColor + ';line-height:1.35;flex-shrink:0;">' + l.label + '</div>';
-    rows += '</div>';
+    const show = i < showLayers;
+    const hasNum = l.num !== null && l.num !== undefined && l.num !== '';
+    const numHTML = (show && hasNum) ? l.num : '';
+    const numColor = (show && hasNum) ? '#ffffff' : 'transparent';
+    const labelColor = show ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.1)';
+    const bgColor = show ? l.bg : '#111111';
+    rows += '<div style="background:' + bgColor + ';border-radius:10px;padding:' + l.pad + ';display:inline-flex;align-items:center;gap:24px;width:' + l.w + ';box-sizing:border-box;margin-bottom:' + (i < layers.length-1 ? '10' : '0') + 'px;">';
+    rows += '<span style="font-size:' + l.fs + 'px;font-weight:800;color:' + numColor + ';line-height:1;flex-shrink:0;">' + numHTML + '</span>';
+    rows += '<span style="font-size:' + Math.max(13, 16 - i) + 'px;font-weight:500;color:' + labelColor + ';line-height:1.35;">' + l.label + '</span>';
+    rows += '</div><br>';
   }
 
-  return '<div class="slide" style="background:#0A0A0A;display:flex;flex-direction:column;justify-content:center;padding:72px 100px;gap:0;">'
-    + '<div style="font-size:13px;font-weight:700;color:#0365f9;letter-spacing:.18em;text-transform:uppercase;margin-bottom:20px;">Funil de Nomes Desenvolvidos</div>'
-    + '<div style="font-size:38px;font-weight:800;color:#ffffff;letter-spacing:-.01em;margin-bottom:48px;line-height:1.2;">Do universo<br>ao nome certo.</div>'
-    + rows
+  return '<div class="slide" style="background:#0A0A0A;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:72px 120px;">'
+    + '<div style="font-size:13px;font-weight:700;color:#0365f9;letter-spacing:.18em;text-transform:uppercase;margin-bottom:16px;text-align:center;">Funil de Nomes Desenvolvidos</div>'
+    + '<div style="font-size:38px;font-weight:800;color:#ffffff;letter-spacing:-.01em;margin-bottom:44px;line-height:1.2;text-align:center;">Do universo<br>ao nome certo.</div>'
+    + '<div style="display:flex;flex-direction:column;align-items:center;">' + rows + '</div>'
+    + '</div>';
+}
+
+function buildTabelaComp(d) {
+  const sinS = slides.find(s => s.type === 'sinaleira');
+  const t40 = slides.find(s => s.type === 'top40');
+  const inpiS = slides.find(s => s.type === 'inpiclass');
+  const classes = inpiS ? (inpiS.data.classes && inpiS.data.classes.length ? inpiS.data.classes : [inpiS.data.classNum || 35]) : [35];
+  const classNum = classes[0];
+  console.log('[Sinaleira] classes=', classes, 'inpiS.data=', inpiS ? inpiS.data : null);
+  const inpi2Header = classes.length > 1 ? '<th style="' + th + 'width:18%;">INPI — CLASSE ' + classes[1] + '</th>' : '';
+  const t40All = t40 ? (t40.data.words || []).filter(w => w.kept && w.text) : [];
+  const selected = sinS
+    ? t40All.filter(w => sinS.data.rows && sinS.data.rows[w.text] && sinS.data.rows[w.text].selected)
+    : [];
+
+  if (selected.length === 0) {
+    return '<div class="slide" style="background:#FAFAF8;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;color:#BBB;font-size:20px;">Nenhum finalista selecionado na Sinaleira.</div>';
+  }
+
+  const cellBg = (color) => {
+    if (color === 'green') return '#c8f0c8';
+    if (color === 'yellow') return '#f5e6a3';
+    if (color === 'red') return '#f5b8b8';
+    return '#f0f0ea';
+  };
+
+  const th = 'padding:16px 20px;color:#ffffff;font-size:13px;font-weight:700;letter-spacing:.08em;text-align:left;border:1px solid #444;background:#1a1a18;';
+  const thC = 'padding:16px 20px;color:#ffffff;font-size:13px;font-weight:700;letter-spacing:.08em;text-align:center;border:1px solid #444;background:#1a1a18;';
+  const tdN = 'padding:14px 18px;font-size:14px;font-weight:700;color:#0A0A0A;border:1px solid #ddd;background:#f5f5f0;vertical-align:middle;white-space:nowrap;';
+  const tdS = 'padding:14px 18px;font-size:13px;font-weight:400;color:#333;border:1px solid #ddd;background:#fafaf8;vertical-align:middle;line-height:1.5;';
+
+  const rows = selected.map((w, i) => {
+    const row = (sinS.data.rows && sinS.data.rows[w.text]) || {};
+    const apresSlide = slides.find(s => s.type === 'nomeApres' && s.data && s.data.nome === w.text);
+    const sig = apresSlide ? (apresSlide.data.significado || '') : '';
+    const combrText = row.combrText || '';
+    const inpiText = row.inpiText || '';
+    const statusText = row.statusText || '';
+    const combrBg = cellBg(row.combrColor);
+    const inpiBg = cellBg(row.inpiColor);
+    const statusBg = cellBg(row.statusColor);
+    return '<tr>'
+      + '<td style="' + tdN + '">' + (i+1) + '. ' + esc(w.text) + '</td>'
+      + '<td style="' + tdS + '">' + esc(sig) + '</td>'
+      + '<td style="padding:14px 18px;font-size:13px;font-weight:400;color:#333;border:1px solid #ddd;background:' + combrBg + ';vertical-align:middle;text-align:center;line-height:1.5;">' + esc(combrText) + '</td>'
+      + '<td style="padding:14px 18px;font-size:13px;font-weight:400;color:#333;border:1px solid #ddd;background:' + inpiBg + ';vertical-align:middle;line-height:1.5;">' + esc(inpiText) + '</td>'
+      + (classes.length > 1 ? '<td style="padding:14px 18px;font-size:13px;font-weight:400;color:#333;border:1px solid #ddd;background:' + cellBg(row.inpi2Color) + ';vertical-align:middle;line-height:1.5;">' + esc(row.inpi2Text||'') + '</td>' : '')
+      + '<td style="padding:14px 18px;font-size:13px;font-weight:600;color:#333;border:1px solid #ddd;background:' + statusBg + ';vertical-align:middle;text-align:center;">' + esc(statusText) + '</td>'
+      + '</tr>';
+  }).join('');
+
+  const cover = slides.find(s => s.type === 'cover');
+  const monthYear = cover ? (cover.data.monthYear || '') : '';
+
+  return '<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 60px 32px;gap:12px;font-family:Inter,sans-serif;">'
+    + '<table style="width:100%;max-width:1680px;border-collapse:collapse;">'
+    + '<thead><tr>'
+    + '<th style="' + th + 'width:14%;">NOME</th>'
+    + '<th style="' + th + 'width:28%;">SIGNIFICADO</th>'
+    + '<th style="' + thC + 'width:18%;">WWW.</th>'
+    + '<th style="' + th + (classes.length > 1 ? 'width:18%' : 'width:22%') + ';">INPI — CLASSE ' + classNum + '</th>'
+    + (classes.length > 1 ? '<th style="' + th + 'width:18%;">INPI — CLASSE ' + classes[1] + '</th>' : '')
+    + '<th style="' + thC + 'width:18%;">STATUS</th>'
+    + '</tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '</table>'
+    + '<div style="display:flex;gap:20px;justify-content:center;align-items:center;">'
+    + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;border-radius:3px;background:#f09090;flex-shrink:0;"></div><span style="font-size:12px;color:#555;">Não disponível</span></div>'
+    + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;border-radius:3px;background:#f5d87a;flex-shrink:0;"></div><span style="font-size:12px;color:#555;">Atenção</span></div>'
+    + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;border-radius:3px;background:#a8e6b0;flex-shrink:0;"></div><span style="font-size:12px;color:#555;">Disponível</span></div>'
+    + '</div>'
+    + '<div style="font-size:11px;color:#888;line-height:1.6;text-align:center;">'
+    + 'Pesquisa superficial de análise de disponibilidade. Todo o processo de registro de nome em INPI deve passar por um advogado especializado para encaminhamento e certificação de disponibilidade.'
+    + (monthYear ? '<br>Informações atualizadas em ' + esc(monthYear) + '.' : '')
+    + '</div>'
+    + '</div>';
+}
+
+function buildMatrizAval(d) {
+  // Get selected finalists from sinaleira
+  const sinSlide = slides.find(s => s.type === 'sinaleira');
+  const t40 = slides.find(s => s.type === 'top40');
+  const finalists = t40 ? (t40.data.words || []).filter(w => w.kept && w.text) : [];
+  const selected = sinSlide
+    ? finalists.filter(w => sinSlide.data.rows && sinSlide.data.rows[w.text] && sinSlide.data.rows[w.text].selected)
+    : finalists;
+  const names = selected.length > 0 ? selected : finalists;
+
+  const headers = [
+    { label: 'CONCEITO', sub: 'O conceito do nome agrada?',
+      icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>' },
+    { label: 'ORIGINALIDADE', sub: 'O nome é original e forte?',
+      icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' },
+    { label: 'SONORIDADE', sub: 'A sonoridade do nome é agradável?',
+      icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>' },
+    { label: 'PRONÚNCIA', sub: 'O nome é fácil de pronunciar?',
+      icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>' },
+    { label: 'GRAFIA', sub: 'O nome é fácil de escrever?',
+      icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' },
+    { label: 'POTENCIAL', sub: 'Esse nome tem potencial para ser explorado como marca?',
+      icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>' },
+  ];
+
+  const thStyle = 'padding:18px 16px;color:#ffffff;font-size:16px;font-weight:700;letter-spacing:.04em;text-align:center;border:1px solid #555;vertical-align:top;background:#2a2a28;width:14.28%;';
+  const thSubStyle = 'font-size:14px;font-weight:300;font-style:italic;color:#ccc;display:block;margin-top:6px;letter-spacing:0;';
+  const tdNameStyle = 'padding:18px 18px;font-size:16px;font-weight:700;color:#2a2a28;border:1px solid #ccc;background:#f0efea;vertical-align:middle;white-space:nowrap;';
+  const tdStyle = 'padding:14px 12px;border:1px solid #ccc;background:#e8e7e2;';
+
+  const headerCells = headers.map(h =>
+    `<th style="${thStyle}"><div style="display:flex;flex-direction:column;align-items:center;gap:8px;">${h.icon}<span>${h.label}</span><span style="${thSubStyle}">${h.sub}</span></div></th>`
+  ).join('');
+
+  const rows = names.map((w, i) =>
+    `<tr>
+      <td style="${tdNameStyle}">${i+1}. ${esc(w.text)}</td>
+      ${headers.map(() => `<td style="${tdStyle}"></td>`).join('')}
+    </tr>`
+  ).join('');
+
+  return `<div class="slide" style="background:#DADAD5;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 72px;gap:20px;font-family:'Inter',sans-serif;">
+    <div style="text-align:center;">
+      <div style="font-size:26px;font-weight:800;color:#0A0A0A;letter-spacing:.08em;text-transform:uppercase;">Matriz de Avaliação do Cliente</div>
+      <div style="font-size:17px;font-style:italic;color:#555;margin-top:6px;font-weight:400;">Notas de 0 a 5</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th style="${thStyle}text-align:left;background:#1a1a18;font-size:16px;">NOME</th>
+          ${headerCells}
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="font-size:18px;font-weight:700;color:#0A0A0A;text-align:center;font-style:italic;">
+      Lembre-se, dificilmente um nome será nota 5 em todos quesitos, isto é normal.
+    </div>
+  </div>`;
+}
+
+function buildFinalistas(d) {
+  return `<div class="slide" style="background:#0A0A0A;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;">
+    <div style="font-size:32px;font-weight:800;color:#ffffff;letter-spacing:.14em;text-transform:uppercase;text-align:center;">Conhecendo as Alternativas</div>
+  </div>`;
+}
+
+function buildSinaleira(d) {
+  // Get finalist names from top40
+  const t40 = slides.find(s => s.type === 'top40');
+  const inpiS = slides.find(s => s.type === 'inpiclass');
+  const classes = inpiS ? (inpiS.data.classes && inpiS.data.classes.length ? inpiS.data.classes : [inpiS.data.classNum || 35]) : [35];
+  const classNum = classes[0];
+  const finalists = t40 ? (t40.data.words || []).filter(w => w.kept && w.text) : [];
+  // Get date from cover
+  const cover = slides.find(s => s.type === 'cover');
+  const monthYear = cover ? (cover.data.monthYear || '') : '';
+
+  if (finalists.length === 0) {
+    return `<div class="slide" style="background:#FAFAF8;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;color:#BBB;font-size:20px;">Marque finalistas no Top 40 do Briefing</div>`;
+  }
+
+  const hasTwo = classes.length > 1;
+  const rows = finalists.map((w, i) => {
+    const row = (d.rows && d.rows[w.text]) || { combrText:'', combrColor:'', inpiText:'', inpiColor:'', inpi2Text:'', inpi2Color:'', statusText:'', statusColor:'' };
+    const cs = (color) => {
+      const bg = color === 'green' ? '#a8e6b0' : color === 'yellow' ? '#f5d87a' : color === 'red' ? '#f09090' : '#f5f5f0';
+      return 'background:' + bg + ';padding:14px 20px;vertical-align:middle;border:1px solid #ddd;';
+    };
+    const inpi2Cell = hasTwo ? '<td style="' + cs(row.inpi2Color) + 'font-size:14px;">' + esc(row.inpi2Text||'') + '</td>' : '';
+    return '<tr>'
+      + '<td style="padding:14px 20px;border:1px solid #ddd;font-weight:700;font-size:16px;background:#f9f9f6;">' + String(i+1).padStart(2,'0') + '. ' + esc(w.text) + '</td>'
+      + '<td style="' + cs(row.combrColor) + 'font-size:14px;text-align:center;">' + esc(row.combrText||'') + '</td>'
+      + '<td style="' + cs(row.inpiColor) + 'font-size:14px;">' + esc(row.inpiText||'') + '</td>'
+      + inpi2Cell
+      + '<td style="' + cs(row.statusColor) + 'font-size:14px;font-weight:600;">' + esc(row.statusText||'') + '</td>'
+      + '</tr>';
+  }).join('');
+
+  const inpi2Header = classes.length > 1 ? '<th style="padding:16px 20px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;text-align:left;border:1px solid #222;width:22%;">INPI — CLASSE ' + classes[1] + '</th>' : '';
+  const inpi2ColWidth = classes.length > 1 ? '22%' : '36%';
+  return `<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 72px 32px;gap:12px;font-family:'Inter',sans-serif;">
+    <table style="width:100%;max-width:1680px;border-collapse:collapse;font-family:'Inter',sans-serif;">
+      <thead>
+        <tr style="background:#0A0A0A;">
+          <th style="padding:16px 20px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;text-align:left;border:1px solid #222;width:18%;">NOME</th>
+          <th style="padding:16px 20px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;text-align:center;border:1px solid #222;width:22%;">.COM.BR</th>
+          <th style="padding:16px 20px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;text-align:left;border:1px solid #222;width:${inpi2ColWidth};">INPI — CLASSE ${classNum}</th>
+          ${inpi2Header}
+          <th style="padding:16px 20px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;text-align:left;border:1px solid #222;width:24%;">STATUS</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="display:flex;gap:20px;justify-content:center;align-items:center;">
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;border-radius:3px;background:#f09090;flex-shrink:0;"></div><span style="font-size:12px;color:#555;">Não disponível</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;border-radius:3px;background:#f5d87a;flex-shrink:0;"></div><span style="font-size:12px;color:#555;">Atenção</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;border-radius:3px;background:#a8e6b0;flex-shrink:0;"></div><span style="font-size:12px;color:#555;">Disponível</span></div>
+    </div>
+    <div style="font-size:11px;color:#888;line-height:1.6;text-align:center;">
+      Pesquisa superficial de análise de disponibilidade. Todo o processo de registro de nome em INPI deve passar por um advogado especializado para encaminhamento e certificação de disponibilidade.<br>
+      Informações atualizadas em ${esc(monthYear)}.
+    </div>
+  </div>`;
+}
+
+function buildInpiClass(d) {
+  const classes = (d.classes && d.classes.length) ? d.classes : [d.classNum || 35];
+  const multi = classes.length > 1;
+
+  let cardsHTML = '';
+  classes.forEach((num, ci) => {
+    num = parseInt(num) || 35;
+    const desc = INPI_CLASSES[num] || '';
+    const isService = num >= 35;
+    const catLabel = isService ? 'Classe de Serviços' : 'Classe de Produtos';
+    const borderR = ci < classes.length - 1 ? 'border-right:1px solid #E0DED6;' : '';
+    const numSize = multi ? 64 : 80;
+    const descSize = multi ? 20 : 24;
+    cardsHTML += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center;padding:0 60px;' + borderR + '">'
+      + '<div style="font-size:' + numSize + 'px;font-weight:800;color:#0A0A0A;line-height:1;">' + String(num).padStart(2,'0') + '</div>'
+      + '<div style="width:50px;height:3px;background:#0365f9;border-radius:2px;"></div>'
+      + '<div style="font-size:' + descSize + 'px;font-weight:400;color:#444;line-height:1.6;max-width:580px;">' + esc(desc) + '</div>'
+      + '<div style="font-size:12px;font-weight:600;color:#999;letter-spacing:.12em;text-transform:uppercase;">' + catLabel + '</div>'
+      + '</div>';
+  });
+
+  const title = multi ? 'Classes INPI Consideradas' : 'Classe INPI Considerada';
+  return '<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 80px;gap:40px;font-family:Inter,sans-serif;">'
+    + '<div style="font-size:13px;font-weight:700;color:#0365f9;letter-spacing:.18em;text-transform:uppercase;text-align:center;">' + title + '</div>'
+    + '<div style="display:flex;gap:0;width:100%;justify-content:center;align-items:flex-start;">' + cardsHTML + '</div>'
+    + '</div>';
+}
+
+
+function buildTabelaComp(d) {
+  const sinS = slides.find(s => s.type === 'sinaleira');
+  const t40 = slides.find(s => s.type === 'top40');
+  const inpiS = slides.find(s => s.type === 'inpiclass');
+  const classNum = inpiS ? inpiS.data.classNum : '?';
+  const t40All = t40 ? (t40.data.words || []).filter(w => w.kept && w.text) : [];
+  const selected = sinS
+    ? t40All.filter(w => sinS.data.rows && sinS.data.rows[w.text] && sinS.data.rows[w.text].selected)
+    : [];
+
+  if (selected.length === 0) {
+    return '<div class="slide" style="background:#FAFAF8;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;color:#BBB;font-size:20px;">Nenhum finalista selecionado na Sinaleira.</div>';
+  }
+
+  const cellBg = (color) => {
+    if (color === 'green') return '#c8f0c8';
+    if (color === 'yellow') return '#f5e6a3';
+    if (color === 'red') return '#f5b8b8';
+    return '#f0f0ea';
+  };
+
+  const th = 'padding:16px 20px;color:#ffffff;font-size:13px;font-weight:700;letter-spacing:.08em;text-align:left;border:1px solid #444;background:#1a1a18;';
+  const thC = 'padding:16px 20px;color:#ffffff;font-size:13px;font-weight:700;letter-spacing:.08em;text-align:center;border:1px solid #444;background:#1a1a18;';
+  const tdN = 'padding:14px 18px;font-size:14px;font-weight:700;color:#0A0A0A;border:1px solid #ddd;background:#f5f5f0;vertical-align:middle;white-space:nowrap;';
+  const tdS = 'padding:14px 18px;font-size:13px;font-weight:400;color:#333;border:1px solid #ddd;background:#fafaf8;vertical-align:middle;line-height:1.5;';
+
+  const rows = selected.map((w, i) => {
+    const row = (sinS.data.rows && sinS.data.rows[w.text]) || {};
+    const apresSlide = slides.find(s => s.type === 'nomeApres' && s.data && s.data.nome === w.text);
+    const sig = apresSlide ? (apresSlide.data.significado || '') : '';
+    const combrText = row.combrText || '';
+    const inpiText = row.inpiText || '';
+    const statusText = row.statusText || '';
+    const combrBg = cellBg(row.combrColor);
+    const inpiBg = cellBg(row.inpiColor);
+    const statusBg = cellBg(row.statusColor);
+    return '<tr>'
+      + '<td style="' + tdN + '">' + (i+1) + '. ' + esc(w.text) + '</td>'
+      + '<td style="' + tdS + '">' + esc(sig) + '</td>'
+      + '<td style="padding:14px 18px;font-size:13px;font-weight:400;color:#333;border:1px solid #ddd;background:' + combrBg + ';vertical-align:middle;text-align:center;line-height:1.5;">' + esc(combrText) + '</td>'
+      + '<td style="padding:14px 18px;font-size:13px;font-weight:400;color:#333;border:1px solid #ddd;background:' + inpiBg + ';vertical-align:middle;line-height:1.5;">' + esc(inpiText) + '</td>'
+      + '<td style="padding:14px 18px;font-size:13px;font-weight:600;color:#333;border:1px solid #ddd;background:' + statusBg + ';vertical-align:middle;text-align:center;">' + esc(statusText) + '</td>'
+      + '</tr>';
+  }).join('');
+
+  const cover = slides.find(s => s.type === 'cover');
+  const monthYear = cover ? (cover.data.monthYear || '') : '';
+
+  return '<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 60px 32px;gap:12px;font-family:Inter,sans-serif;">'
+    + '<table style="width:100%;max-width:1680px;border-collapse:collapse;">'
+    + '<thead><tr>'
+    + '<th style="' + th + 'width:14%;">NOME</th>'
+    + '<th style="' + th + 'width:28%;">SIGNIFICADO</th>'
+    + '<th style="' + thC + 'width:18%;">WWW.</th>'
+    + '<th style="' + th + 'width:22%;">INPI — CLASSE ' + classNum + '</th>'
+    + '<th style="' + thC + 'width:18%;">STATUS</th>'
+    + '</tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '</table>'
+    + '<div style="display:flex;gap:20px;justify-content:center;align-items:center;">'
+    + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;border-radius:3px;background:#f09090;flex-shrink:0;"></div><span style="font-size:12px;color:#555;">Não disponível</span></div>'
+    + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;border-radius:3px;background:#f5d87a;flex-shrink:0;"></div><span style="font-size:12px;color:#555;">Atenção</span></div>'
+    + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;border-radius:3px;background:#a8e6b0;flex-shrink:0;"></div><span style="font-size:12px;color:#555;">Disponível</span></div>'
+    + '</div>'
+    + '<div style="font-size:11px;color:#888;line-height:1.6;text-align:center;">'
+    + 'Pesquisa superficial de análise de disponibilidade. Todo o processo de registro de nome em INPI deve passar por um advogado especializado para encaminhamento e certificação de disponibilidade.'
+    + (monthYear ? '<br>Informações atualizadas em ' + esc(monthYear) + '.' : '')
+    + '</div>'
     + '</div>';
 }
 
@@ -1735,7 +2040,7 @@ function buildSinaleira(d) {
     </tr>`;
   }).join('');
 
-  return `<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 72px 36px;gap:20px;font-family:'Inter',sans-serif;">
+  return `<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 72px 32px;gap:12px;font-family:'Inter',sans-serif;">
     <table style="width:100%;max-width:1680px;border-collapse:collapse;font-family:'Inter',sans-serif;">
       <thead>
         <tr style="background:#0A0A0A;">
@@ -1747,7 +2052,12 @@ function buildSinaleira(d) {
       </thead>
       <tbody>${rows}</tbody>
     </table>
-    <div style="font-size:11px;color:#888;line-height:1.6;text-align:center;margin-top:auto;">
+    <div style="display:flex;gap:20px;justify-content:center;align-items:center;">
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;border-radius:3px;background:#f09090;flex-shrink:0;"></div><span style="font-size:12px;color:#555;">Não disponível</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;border-radius:3px;background:#f5d87a;flex-shrink:0;"></div><span style="font-size:12px;color:#555;">Atenção</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;border-radius:3px;background:#a8e6b0;flex-shrink:0;"></div><span style="font-size:12px;color:#555;">Disponível</span></div>
+    </div>
+    <div style="font-size:11px;color:#888;line-height:1.6;text-align:center;">
       Pesquisa superficial de análise de disponibilidade. Todo o processo de registro de nome em INPI deve passar por um advogado especializado para encaminhamento e certificação de disponibilidade.<br>
       Informações atualizadas em ${esc(monthYear)}.
     </div>
@@ -2024,6 +2334,8 @@ function renderPanel(slide, idx) {
       break;
     case 'sinaleira':
       body.innerHTML = (() => {
+        const inpiS = slides.find(s => s.type === 'inpiclass');
+        const inpiClasses = inpiS ? (inpiS.data.classes || [inpiS.data.classNum||35]) : [35];
         const t40s = slides.find(s => s.type === 'top40');
         const fins = t40s ? (t40s.data.words || []).filter(w => w.kept && w.text) : [];
         if (!fins.length) return '<div style="padding:12px;font-size:12px;color:var(--g400);">Nenhum finalista marcado no Top 40.</div>';
@@ -2045,11 +2357,16 @@ function renderPanel(slide, idx) {
               <input class="field-input" style="flex:1;font-size:11px;padding:3px 6px;" placeholder="Ex: Não disponível" value="${esc(row.combrText||'')}" oninput="setSinText(${idx},'${esc(w.text)}','combr',this.value)">
               ${cb('combr','green')}${cb('combr','yellow')}${cb('combr','red')}
             </div>
-            <div style="font-size:10px;color:var(--g400);margin-bottom:2px;">INPI</div>
+            <div style="font-size:10px;color:var(--g400);margin-bottom:2px;">INPI — CLASSE ${inpiS ? (inpiS.data.classes||[inpiS.data.classNum||35])[0] : 35}</div>
             <div style="display:flex;gap:4px;align-items:center;margin-bottom:5px;">
               <input class="field-input" style="flex:1;font-size:11px;padding:3px 6px;" placeholder="Ex: Livre na classe" value="${esc(row.inpiText||'')}" oninput="setSinText(${idx},'${esc(w.text)}','inpi',this.value)">
               ${cb('inpi','green')}${cb('inpi','yellow')}${cb('inpi','red')}
             </div>
+            ${inpiClasses.length > 1 ? `<div style="font-size:10px;color:var(--g400);margin-bottom:2px;">INPI — CLASSE ${inpiClasses[1]}</div>
+            <div style="display:flex;gap:4px;align-items:center;margin-bottom:5px;">
+              <input class="field-input" style="flex:1;font-size:11px;padding:3px 6px;" placeholder="Ex: Livre na classe" value="${esc(row.inpi2Text||'')}" oninput="setSinText(${idx},'${esc(w.text)}','inpi2',this.value)">
+              ${cb('inpi2','green')}${cb('inpi2','yellow')}${cb('inpi2','red')}
+            </div>` : ''}
             <div style="font-size:10px;color:var(--g400);margin-bottom:2px;">STATUS</div>
             <div style="display:flex;gap:4px;align-items:center;">
               <input class="field-input" style="flex:1;font-size:11px;padding:3px 6px;" placeholder="Ex: APTA" value="${esc(row.statusText||'')}" oninput="setSinText(${idx},'${esc(w.text)}','status',this.value)">
@@ -2065,6 +2382,9 @@ function renderPanel(slide, idx) {
       break;
     case 'matrizaval':
       body.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--g400);">Slide gerado automaticamente a partir dos finalistas marcados na Sinaleira.</div>';
+      break;
+    case 'tabelacomp':
+      body.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--g400);">Slide gerado automaticamente — dados puxados da Sinaleira e dos slides de Apresentação.</div>';
       break;
     case 'funil':
       body.innerHTML = `<div style="padding:4px 0;">
@@ -2435,6 +2755,7 @@ function attachListeners(slide, idx) {
       break;
     case 'finalistas': break;
     case 'matrizaval': break;
+    case 'tabelacomp': break;
     case 'funil':
       bindName('f_slideName', idx);
       bind('f_funil_total', 'totalGerados');
@@ -3246,7 +3567,7 @@ function bApplyBriefingVisibility(type) {
   if (inpiSec2) inpiSec2.style.display = type === 'naming' ? 'block' : 'none';
   if (type === 'naming') {
     const _inpiS = slides.find(s => s.type === 'inpiclass');
-    bPopulateInpiSelect(_inpiS ? _inpiS.data.classNum : 35);
+    bPopulateInpiSelect((_inpiS && _inpiS.data.classes) ? _inpiS.data.classes[0] : (_inpiS ? _inpiS.data.classNum : 35));
   }
   const inpiSec = document.getElementById('bSectionInpi');
   if (inpiSec) inpiSec.style.display = type === 'naming' ? 'block' : 'none';
@@ -3265,9 +3586,15 @@ function applyProjectTypeVisibility(type) {
   // ── Remove slides for naming ──────────────────────────────────────────────
   // Save condicaohistorica text before removing naming slides
   const _savedCondicaoText = (slides.find(s => s.type === 'condicaohistorica')?.data?.text) || '';
-  // Also remove any previously added naming-specific slides
-  // Save teaser/apres data before removing
+  // Save ALL naming-only data BEFORE filtering them out
   const _savedTeasers = slides.filter(s => s.type === 'nomeTeaser' || s.type === 'nomeApres').map(s => JSON.parse(JSON.stringify(s)));
+  const _preFilterInpi = slides.find(s => s.type === 'inpiclass');
+  const _preFilterInpiClasses = _preFilterInpi ? (_preFilterInpi.data.classes || [_preFilterInpi.data.classNum || 35]) : null;
+  const _preFilterWords = (() => { const t = slides.find(s => s.type === 'top40'); return t ? JSON.parse(JSON.stringify(t.data.words)) : null; })();
+  const _preFilterSin = slides.find(s => s.type === 'sinaleira');
+  const _preFilterSinRows = _preFilterSin ? JSON.parse(JSON.stringify(_preFilterSin.data.rows || {})) : null;
+  const _preFilterCond = slides.find(s => s.type === 'condicaohistorica');
+  const _preFilterCondText = _preFilterCond ? _preFilterCond.data.text : null;
   slides = slides.filter(s => s._namingOnly !== true);
 
   if (type === 'naming') {
@@ -3318,12 +3645,11 @@ function applyProjectTypeVisibility(type) {
     if (brandPos >= 0) {
       // Insert in reverse order — last inserted appears last
       // Preserve INPI class number
-      const _existingInpi = slides.find(s => s.type === 'inpiclass');
-      const _savedInpiClass = _existingInpi ? _existingInpi.data.classNum : 35;
-      const inpiSlide = { ...dc(DEFAULTS.inpiclass), _namingOnly: true, data: { classNum: _savedInpiClass } };
+      const _savedInpiClasses = _preFilterInpiClasses || [35];
+      _inpiClassesGlobal = _savedInpiClasses.slice();
+      const inpiSlide = { ...dc(DEFAULTS.inpiclass), _namingOnly: true, data: { classes: _savedInpiClasses, classNum: _savedInpiClasses[0] } };
       // Preserve sinaleira data
-      const _existingSinaleira = slides.find(s => s.type === 'sinaleira');
-      const _savedSinRows = _existingSinaleira ? JSON.parse(JSON.stringify(_existingSinaleira.data.rows||{})) : {};
+      const _savedSinRows = _preFilterSinRows || {};
       const sineiraSlide = { ...dc(DEFAULTS.sinaleira), _namingOnly: true, data: { rows: _savedSinRows } };
       const finalistasSlide = { ...dc(DEFAULTS.finalistas), _namingOnly: true };
       // Restore previously created teaser/apres slides
@@ -3334,7 +3660,9 @@ function applyProjectTypeVisibility(type) {
       const savedFunilTotal = existingFunils.length > 0 ? existingFunils[0].data.totalGerados : 297;
       const mkFunil = (name, showLayers) => ({ ...dc(DEFAULTS.funil), name, _namingOnly: true, data: { totalGerados: savedFunilTotal, showLayers: showLayers || 5 } });
 
+      const tabelaSlide = { ...dc(DEFAULTS.tabelacomp), _namingOnly: true };
       slides.splice(brandPos + 1, 0, matrizSlide);
+      slides.splice(brandPos + 1, 0, tabelaSlide);
       slides.splice(brandPos + 1, 0, meth6);
       // Re-insert saved teaser/apres after meth6
       _savedTeasers.slice().reverse().forEach(s => slides.splice(brandPos + 2, 0, s));
@@ -3385,7 +3713,7 @@ function applyProjectTypeVisibility(type) {
   });
   if (type === 'naming') {
     const _inpiForApply = slides.find(s => s.type === 'inpiclass');
-    bPopulateInpiSelect(_inpiForApply ? _inpiForApply.data.classNum : 35);
+    bPopulateInpiSelect((_inpiForApply && _inpiForApply.data.classes) ? _inpiForApply.data.classes[0] : (_inpiForApply ? _inpiForApply.data.classNum : 35));
   }
 
   // ── Naming-only briefing sections ────────────────────────────────────────
@@ -3423,7 +3751,10 @@ function bSetProjectType(type) {
   // Render briefing-only lists that depend on naming slides
   bRenderTop40();
   const inpiSlideFound2 = slides.find(s => s.type === 'inpiclass');
-  bPopulateInpiSelect(inpiSlideFound2 ? inpiSlideFound2.data.classNum : 35);
+  const _iClasses = inpiSlideFound2 ? (inpiSlideFound2.data.classes || [inpiSlideFound2.data.classNum||35]) : [35];
+  _inpiClassesGlobal = _iClasses.slice();
+  bPopulateInpiSelect(_iClasses[0]);
+  if (_iClasses.length > 1) { const w2=document.getElementById("bInpiClass2Wrap");const b2=document.getElementById("bAddInpiClass2Btn");if(w2)w2.style.display="block";if(b2)b2.style.display="none";bPopulateInpiSelect2(_iClasses[1]); }
   const cSlide2 = slides.find(s => s.type === 'condicaohistorica');
   const cEl2 = document.getElementById('b_condicaoText');
   if (cSlide2 && cEl2) cEl2.value = cSlide2.data.text || '';
@@ -4176,9 +4507,64 @@ function bPopulateInpiSelect(selectedNum) {
   sel.value = selectedNum || 35;
 }
 
-function bSyncInpiClass(val) {
-  const inpi = slides.find(s => s.type === 'inpiclass');
-  if (inpi) { inpi.data.classNum = parseInt(val); refreshPreview(); }
+function bSyncInpiClass() {
+  const v1 = parseInt(document.getElementById('b_inpiClass')?.value) || 35;
+  const wrap2 = document.getElementById('bInpiClass2Wrap');
+  const v2raw = document.getElementById('b_inpiClass2')?.value;
+  const v2 = (wrap2 && wrap2.style.display !== 'none') ? parseInt(v2raw) : null;
+  const newClasses = v2 ? [v1, v2] : [v1];
+  // Update global AND all inpiclass slides
+  _inpiClassesGlobal = newClasses.slice();
+  slides.forEach(s => {
+    if (s.type === 'inpiclass') {
+      s.data.classes = newClasses.slice();
+      s.data.classNum = v1;
+    }
+  });
+  // Re-render any visible slide that depends on inpi classes
+  renderThumbList();
+  // Force re-render sinaleira and tabelacomp regardless of which slide is active
+  const _allSlides = getViewList();
+  _allSlides.forEach(entry => {
+    if (['sinaleira','tabelacomp','inpiclass'].includes(entry.slide.type)) {
+      const previewEl = document.getElementById('previewContent');
+      if (previewEl && activeIdx === entry.slideIdx) {
+        renderPreview(entry.slide, entry.slideIdx);
+      }
+    }
+  });
+  selectViewSlide(activeViewIdx);
+}
+
+function bAddInpiClass2() {
+  const wrap = document.getElementById('bInpiClass2Wrap');
+  const btn = document.getElementById('bAddInpiClass2Btn');
+  if (wrap) wrap.style.display = 'block';
+  if (btn) btn.style.display = 'none';
+  bPopulateInpiSelect2();
+  bSyncInpiClass();
+}
+
+function bRemoveInpiClass2() {
+  const wrap = document.getElementById('bInpiClass2Wrap');
+  const btn = document.getElementById('bAddInpiClass2Btn');
+  if (wrap) wrap.style.display = 'none';
+  if (btn) btn.style.display = 'block';
+  bSyncInpiClass();
+}
+
+function bPopulateInpiSelect2(selected) {
+  const sel = document.getElementById('b_inpiClass2');
+  if (!sel || typeof INPI_CLASSES === 'undefined') return;
+  sel.innerHTML = '';
+  for (let n = 1; n <= 45; n++) {
+    const desc = (INPI_CLASSES[n] || '').slice(0, 65);
+    const opt = document.createElement('option');
+    opt.value = n;
+    opt.textContent = n.toString().padStart(2,'0') + ' — ' + desc + '...';
+    sel.appendChild(opt);
+  }
+  sel.value = selected || 36;
 }
 
 function setSinText(slideIdx, name, field, val) {
