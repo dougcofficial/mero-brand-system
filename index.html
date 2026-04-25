@@ -893,6 +893,7 @@ const DEFAULTS = {
   filtros:{ type:'filtros', name:'Tipos de Filtros', visible:true, data:{} },
   sinaleira:{ type:'sinaleira', name:'Sinaleira de Viabilidade', visible:true, data:{ rows:{} } },
   finalistas:{ type:'finalistas', name:'Finalistas', visible:true, data:{} },
+  matrizaval:{ type:'matrizaval', name:'Matriz de Avaliação', visible:true, data:{} },
   nomeTeaser:{ type:'nomeTeaser', name:'Teaser', visible:true, data:{ image:null, frase:'' } },
   nomeApres:{ type:'nomeApres', name:'Apresentação', visible:true, data:{ nome:'', significado:'', positivos:'', combr:'', status:'' } },
   final:{ type:'final', name:'Slide Final', visible:true, data:{ brandName:'Mero', contact:'Rua Duque de Caxias, 1170\nLajeado/RS\ncontato@mero.com.br\nwww.mero.com.br', bgColor:'#0365f9', textColor:'#ffffff' }}
@@ -1062,7 +1063,7 @@ function getViewList() {
 }
 
 function thumbBg(s) {
-  const m = {cover:'#0365f9',index:'#1a1a18',subcover:s.data?.bgColor||'#FAFAF8',brand:'#FAFAF8',typography:'#000000',colors:s.data?.bgColor||'#FAFAF8',images:'#CCCCCC',textslide:'#FAFAF8',mockups:'#222222',methodology:'#FAFAF8',qualifiedgen:'#FAFAF8',mandamentos:'#FAFAF8',procedimentos:'#FAFAF8',condicaohistorica:'#FAFAF8',inpiclass:'#FAFAF8',filtros:'#FAFAF8',sinaleira:'#FAFAF8',finalistas:'#0A0A0A',nomeTeaser:'#0A0A0A',nomeApres:'#0A0A0A',top40:'#FAFAF8',riscados:'#FAFAF8',final:s.data?.bgColor||'#0365f9'};
+  const m = {cover:'#0365f9',index:'#1a1a18',subcover:s.data?.bgColor||'#FAFAF8',brand:'#FAFAF8',typography:'#000000',colors:s.data?.bgColor||'#FAFAF8',images:'#CCCCCC',textslide:'#FAFAF8',mockups:'#222222',methodology:'#FAFAF8',qualifiedgen:'#FAFAF8',mandamentos:'#FAFAF8',procedimentos:'#FAFAF8',condicaohistorica:'#FAFAF8',inpiclass:'#FAFAF8',filtros:'#FAFAF8',sinaleira:'#FAFAF8',finalistas:'#0A0A0A',matrizaval:'#DADAD5',nomeTeaser:'#0A0A0A',nomeApres:'#0A0A0A',top40:'#FAFAF8',riscados:'#FAFAF8',final:s.data?.bgColor||'#0365f9'};
   return m[s.type]||'#EEE';
 }
 
@@ -1142,6 +1143,7 @@ function buildSlide(slide, idx) {
       case 'inpiclass': return buildInpiClass(slide.data);
       case 'sinaleira': return buildSinaleira(slide.data);
       case 'finalistas': return buildFinalistas(slide.data);
+      case 'matrizaval': return buildMatrizAval(slide.data);
       case 'nomeTeaser': return buildNomeTeaser(slide.data);
       case 'nomeApres': return buildNomeApres(slide.data);
       case 'filtros': return buildFiltros(slide.data);
@@ -1587,6 +1589,67 @@ function buildNomeApres(d) {
   </div>`;
 }
 
+function buildMatrizAval(d) {
+  // Get selected finalists from sinaleira
+  const sinSlide = slides.find(s => s.type === 'sinaleira');
+  const t40 = slides.find(s => s.type === 'top40');
+  const finalists = t40 ? (t40.data.words || []).filter(w => w.kept && w.text) : [];
+  const selected = sinSlide
+    ? finalists.filter(w => sinSlide.data.rows && sinSlide.data.rows[w.text] && sinSlide.data.rows[w.text].selected)
+    : finalists;
+  const names = selected.length > 0 ? selected : finalists;
+
+  const headers = [
+    { label: 'CONCEITO', sub: 'O conceito do nome agrada?',
+      icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>' },
+    { label: 'ORIGINALIDADE', sub: 'O nome é original e forte?',
+      icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' },
+    { label: 'SONORIDADE', sub: 'A sonoridade do nome é agradável?',
+      icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>' },
+    { label: 'PRONÚNCIA', sub: 'O nome é fácil de pronunciar?',
+      icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>' },
+    { label: 'GRAFIA', sub: 'O nome é fácil de escrever?',
+      icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' },
+    { label: 'POTENCIAL', sub: 'Esse nome tem potencial para ser explorado como marca?',
+      icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>' },
+  ];
+
+  const thStyle = 'padding:18px 16px;color:#ffffff;font-size:16px;font-weight:700;letter-spacing:.04em;text-align:center;border:1px solid #555;vertical-align:top;background:#2a2a28;width:14.28%;';
+  const thSubStyle = 'font-size:14px;font-weight:300;font-style:italic;color:#ccc;display:block;margin-top:6px;letter-spacing:0;';
+  const tdNameStyle = 'padding:18px 18px;font-size:16px;font-weight:700;color:#2a2a28;border:1px solid #ccc;background:#f0efea;vertical-align:middle;white-space:nowrap;';
+  const tdStyle = 'padding:14px 12px;border:1px solid #ccc;background:#e8e7e2;';
+
+  const headerCells = headers.map(h =>
+    `<th style="${thStyle}"><div style="display:flex;flex-direction:column;align-items:center;gap:8px;">${h.icon}<span>${h.label}</span><span style="${thSubStyle}">${h.sub}</span></div></th>`
+  ).join('');
+
+  const rows = names.map((w, i) =>
+    `<tr>
+      <td style="${tdNameStyle}">${i+1}. ${esc(w.text)}</td>
+      ${headers.map(() => `<td style="${tdStyle}"></td>`).join('')}
+    </tr>`
+  ).join('');
+
+  return `<div class="slide" style="background:#DADAD5;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 72px;gap:20px;font-family:'Inter',sans-serif;">
+    <div style="text-align:center;">
+      <div style="font-size:26px;font-weight:800;color:#0A0A0A;letter-spacing:.08em;text-transform:uppercase;">Matriz de Avaliação do Cliente</div>
+      <div style="font-size:17px;font-style:italic;color:#555;margin-top:6px;font-weight:400;">Notas de 0 a 5</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th style="${thStyle}text-align:left;background:#1a1a18;font-size:16px;">NOME</th>
+          ${headerCells}
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="font-size:18px;font-weight:700;color:#0A0A0A;text-align:center;font-style:italic;">
+      Lembre-se, dificilmente um nome será nota 5 em todos quesitos, isto é normal.
+    </div>
+  </div>`;
+}
+
 function buildFinalistas(d) {
   return `<div class="slide" style="background:#0A0A0A;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;">
     <div style="font-size:32px;font-weight:800;color:#ffffff;letter-spacing:.14em;text-transform:uppercase;text-align:center;">Conhecendo as Alternativas</div>
@@ -1949,6 +2012,9 @@ function renderPanel(slide, idx) {
     case 'finalistas':
       body.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--g400);">Slide fixo — conteúdo pré-definido.</div>';
       break;
+    case 'matrizaval':
+      body.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--g400);">Slide gerado automaticamente a partir dos finalistas marcados na Sinaleira.</div>';
+      break;
     case 'nomeTeaser': {
       const d = slides[idx].data;
       body.innerHTML = `<div style="padding:4px 0;">
@@ -2309,6 +2375,7 @@ function attachListeners(slide, idx) {
       bindName('f_slideName', idx);
       break;
     case 'finalistas': break;
+    case 'matrizaval': break;
     case 'nomeTeaser':
       bindName('f_slideName', idx);
       bind('f_nt_frase', 'frase');
@@ -3198,6 +3265,8 @@ function applyProjectTypeVisibility(type) {
       const finalistasSlide = { ...dc(DEFAULTS.finalistas), _namingOnly: true };
       // Restore previously created teaser/apres slides
       _savedTeasers.forEach(s => { s._namingOnly = true; });
+      const matrizSlide = { ...dc(DEFAULTS.matrizaval), _namingOnly: true };
+      slides.splice(brandPos + 1, 0, matrizSlide);
       slides.splice(brandPos + 1, 0, meth6);
       // Re-insert saved teaser/apres after meth6
       _savedTeasers.slice().reverse().forEach(s => slides.splice(brandPos + 2, 0, s));
