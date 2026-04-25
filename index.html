@@ -893,6 +893,8 @@ const DEFAULTS = {
   filtros:{ type:'filtros', name:'Tipos de Filtros', visible:true, data:{} },
   sinaleira:{ type:'sinaleira', name:'Sinaleira de Viabilidade', visible:true, data:{ rows:{} } },
   finalistas:{ type:'finalistas', name:'Finalistas', visible:true, data:{} },
+  nomeTeaser:{ type:'nomeTeaser', name:'Teaser', visible:true, data:{ image:null, frase:'' } },
+  nomeApres:{ type:'nomeApres', name:'Apresentação', visible:true, data:{ nome:'', significado:'', positivos:'', combr:'', status:'' } },
   final:{ type:'final', name:'Slide Final', visible:true, data:{ brandName:'Mero', contact:'Rua Duque de Caxias, 1170\nLajeado/RS\ncontato@mero.com.br\nwww.mero.com.br', bgColor:'#0365f9', textColor:'#ffffff' }}
 };
 
@@ -1060,7 +1062,7 @@ function getViewList() {
 }
 
 function thumbBg(s) {
-  const m = {cover:'#0365f9',index:'#1a1a18',subcover:s.data?.bgColor||'#FAFAF8',brand:'#FAFAF8',typography:'#000000',colors:s.data?.bgColor||'#FAFAF8',images:'#CCCCCC',textslide:'#FAFAF8',mockups:'#222222',methodology:'#FAFAF8',qualifiedgen:'#FAFAF8',mandamentos:'#FAFAF8',procedimentos:'#FAFAF8',condicaohistorica:'#FAFAF8',inpiclass:'#FAFAF8',filtros:'#FAFAF8',sinaleira:'#FAFAF8',finalistas:'#0A0A0A',top40:'#FAFAF8',riscados:'#FAFAF8',final:s.data?.bgColor||'#0365f9'};
+  const m = {cover:'#0365f9',index:'#1a1a18',subcover:s.data?.bgColor||'#FAFAF8',brand:'#FAFAF8',typography:'#000000',colors:s.data?.bgColor||'#FAFAF8',images:'#CCCCCC',textslide:'#FAFAF8',mockups:'#222222',methodology:'#FAFAF8',qualifiedgen:'#FAFAF8',mandamentos:'#FAFAF8',procedimentos:'#FAFAF8',condicaohistorica:'#FAFAF8',inpiclass:'#FAFAF8',filtros:'#FAFAF8',sinaleira:'#FAFAF8',finalistas:'#0A0A0A',nomeTeaser:'#0A0A0A',nomeApres:'#0A0A0A',top40:'#FAFAF8',riscados:'#FAFAF8',final:s.data?.bgColor||'#0365f9'};
   return m[s.type]||'#EEE';
 }
 
@@ -1140,6 +1142,8 @@ function buildSlide(slide, idx) {
       case 'inpiclass': return buildInpiClass(slide.data);
       case 'sinaleira': return buildSinaleira(slide.data);
       case 'finalistas': return buildFinalistas(slide.data);
+      case 'nomeTeaser': return buildNomeTeaser(slide.data);
+      case 'nomeApres': return buildNomeApres(slide.data);
       case 'filtros': return buildFiltros(slide.data);
       case 'top40': return buildTop40(slide.data, false);
       case 'riscados': {
@@ -1237,6 +1241,7 @@ function buildIndex() {
   const etapaSubItems = {
     2: ['Nuvem de Palavras','Condição Histórica/Cultural'],
     4: ['Classe Escolhida','Sinaleira de Viabilidade'],
+    5: ['Finalistas'],
   };
 
   const rowItems = slides.map((s, i) => {
@@ -1535,6 +1540,50 @@ function buildFiltros(d) {
   return `<div class="slide" style="background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 100px;gap:64px;font-family:'Inter',sans-serif;">
     <div style="font-size:22px;font-weight:800;color:#0A0A0A;letter-spacing:.12em;text-transform:uppercase;text-align:center;">Filtros</div>
     <div style="display:flex;gap:28px;align-items:center;justify-content:center;width:100%;">${circles}</div>
+  </div>`;
+}
+
+function buildNomeTeaser(d) {
+  const img = d.image;
+  const frase = d.frase || '';
+  const fraseHTML = frase
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\n/g,'<br>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/__(.+?)__/g,'<u>$1</u>');
+  const imgHTML = img
+    ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover;">`
+    : `<div style="width:100%;height:100%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;"><span style="color:#444;font-size:18px;">Adicione uma imagem</span></div>`;
+  const num = d.num || '01';
+  return `<div class="slide" style="background:#0A0A0A;display:grid;grid-template-columns:1fr 1fr;height:100%;">
+    <div style="overflow:hidden;">${imgHTML}</div>
+    <div style="display:flex;flex-direction:column;justify-content:center;padding:80px 72px;position:relative;">
+      <div style="font-size:13px;font-weight:600;color:#555;letter-spacing:.16em;text-transform:uppercase;margin-bottom:40px;">Opção ${esc(num)}</div>
+      <div style="font-family:'Inter',sans-serif;font-size:28px;font-weight:300;color:#ffffff;line-height:1.6;letter-spacing:-.01em;">${fraseHTML}</div>
+    </div>
+  </div>`;
+}
+
+function buildNomeApres(d) {
+  const num = d.num || '01';
+  const nome = d.nome || '';
+  const combr = d.combr || '';
+  const status = d.status || '';
+  const sig = d.significado || '';
+  const pos = d.positivos || '';
+  const label = (txt) => `<div style="font-size:12px;font-weight:700;color:#666;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;">${txt}</div>`;
+  const val = (txt) => `<div style="font-size:18px;font-weight:300;color:#ffffff;line-height:1.5;margin-bottom:28px;">${esc(txt).replace(/\n/g,'<br>')}</div>`;
+  return `<div class="slide" style="background:#0A0A0A;display:grid;grid-template-columns:1fr 1fr;height:100%;font-family:'Inter',sans-serif;">
+    <div style="display:flex;flex-direction:column;justify-content:center;padding:80px 80px 80px 160px;border-right:1px solid #222;">
+      <div style="font-size:13px;font-weight:600;color:#555;letter-spacing:.16em;text-transform:uppercase;margin-bottom:40px;">Opção ${esc(num)}</div>
+      <div style="font-size:96px;font-weight:300;color:#ffffff;line-height:.9;letter-spacing:-.03em;">${esc(nome)}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center;padding:80px 100px;">
+      ${combr ? label('Disponibilidade .COM.BR') + val(combr) : ''}
+      ${sig ? label('Significado') + val(sig) : ''}
+      ${pos ? label('Pontos Positivos') + val(pos) : ''}
+      ${status ? label('Status') + val(status) : ''}
+    </div>
   </div>`;
 }
 
@@ -1871,8 +1920,12 @@ function renderPanel(slide, idx) {
             const bg = color==='green'?'#a8e6b0':color==='yellow'?'#f5d87a':'#f09090';
             return `<button style="width:18px;height:18px;border-radius:50%;background:${bg};${active}border:none;cursor:pointer;flex-shrink:0;" onclick="setSinColor(${idx},'${esc(w.text)}','${field}','${color}')"></button>`;
           };
-          return `<div style="border:1px solid var(--g200);border-radius:6px;padding:8px;margin-bottom:8px;background:var(--g100);">
-            <div style="font-size:11px;font-weight:700;margin-bottom:6px;">${esc(w.text)}</div>
+          const isSelected = !!(row.selected);
+          return `<div style="border:1px solid ${isSelected ? '#0365f9' : 'var(--g200)'};border-radius:6px;padding:8px;margin-bottom:8px;background:${isSelected ? '#e8f0fe' : 'var(--g100)'};">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleNomeSelected(${idx},'${esc(w.text)}',this.checked)" style="accent-color:#0365f9;width:14px;height:14px;flex-shrink:0;">
+              <div style="font-size:11px;font-weight:700;color:#0A0A0A;">${esc(w.text)} ${isSelected ? '<span style=\"font-size:9px;color:#0365f9;font-weight:400;\">· slides criados</span>' : ''}</div>
+            </div>
             <div style="font-size:10px;color:var(--g400);margin-bottom:2px;">.COM.BR</div>
             <div style="display:flex;gap:4px;align-items:center;margin-bottom:5px;">
               <input class="field-input" style="flex:1;font-size:11px;padding:3px 6px;" placeholder="Ex: Não disponível" value="${esc(row.combrText||'')}" oninput="setSinText(${idx},'${esc(w.text)}','combr',this.value)">
@@ -1896,6 +1949,35 @@ function renderPanel(slide, idx) {
     case 'finalistas':
       body.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--g400);">Slide fixo — conteúdo pré-definido.</div>';
       break;
+    case 'nomeTeaser': {
+      const d = slides[idx].data;
+      body.innerHTML = `<div style="padding:4px 0;">
+        ${fi('Nome do Slide','f_slideName',slides[idx].name)}
+        <div class="field-section">Imagem (lado esquerdo)</div>
+        ${d.image
+          ? `<div style="aspect-ratio:16/9;overflow:hidden;border-radius:4px;margin-bottom:6px;"><img src="${d.image}" style="width:100%;height:100%;object-fit:cover;"></div>
+             <button class="btn btn-ghost btn-sm" style="width:100%;margin-bottom:10px;" onclick="clearNomeSlideImg(${idx},'image')">Remover imagem</button>`
+          : `<div class="image-upload-area" onclick="uploadNomeSlideImg(${idx},'image')"><div class="upload-icon">📷</div><div class="upload-label">Adicionar imagem</div></div>`
+        }
+        <div class="field-section">Frase de Impacto</div>
+        <div class="field-section">Frase de Impacto</div>
+        <div style="font-size:10px;color:var(--g400);margin-bottom:6px;">Use **texto** para <strong>negrito</strong> e __texto__ para <u>sublinhado</u></div>
+        ${fi('Frase','f_nt_frase',d.frase,'textarea','rows="5"')}
+      </div>`;
+      break;
+    }
+    case 'nomeApres': {
+      const d2 = slides[idx].data;
+      body.innerHTML = `<div style="padding:4px 0;">
+        ${fi('Nome do Slide','f_slideName',slides[idx].name)}
+        ${fi('Nome','f_na_nome',d2.nome)}
+        ${fi('Significado','f_na_sig',d2.significado,'textarea','rows="3"')}
+        ${fi('Pontos Positivos','f_na_pos',d2.positivos,'textarea','rows="3"')}
+        ${fi('.COM.BR','f_na_combr',d2.combr,'textarea','rows="2"')}
+        ${fi('Status INPI','f_na_status',d2.status,'textarea','rows="2"')}
+      </div>`;
+      break;
+    }
     case 'final': body.innerHTML = pFinal(slide.data, idx); break;
     default: body.innerHTML = '<p style="color:#9B9A94;font-size:12px;">Sem propriedades.</p>';
   }
@@ -2227,6 +2309,18 @@ function attachListeners(slide, idx) {
       bindName('f_slideName', idx);
       break;
     case 'finalistas': break;
+    case 'nomeTeaser':
+      bindName('f_slideName', idx);
+      bind('f_nt_frase', 'frase');
+      break;
+    case 'nomeApres':
+      bindName('f_slideName', idx);
+      bind('f_na_nome', 'nome');
+      bind('f_na_sig', 'significado');
+      bind('f_na_pos', 'positivos');
+      bind('f_na_combr', 'combr');
+      bind('f_na_status', 'status');
+      break;
     case 'inpiclass': bindName('f_slideName', idx); break;
     case 'top40': bindName('f_slideName', idx); break;
     case 'riscados': bindName('f_slideName', idx); break;
@@ -2576,6 +2670,25 @@ function setMockupLayout(idx, val) {
 function removeMockup(slideIdx, imgIdx) {
   slides[slideIdx].data.images.splice(imgIdx, 1);
   renderPanel(slides[slideIdx], slideIdx); refreshPreview();
+}
+function uploadNomeSlideImg(idx, field) {
+  const input = document.getElementById('imageFileInput');
+  input.onchange = e => {
+    const file = e.target.files[0]; if(!file) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      compressImage(ev.target.result, compressed => {
+        slides[idx].data[field] = compressed;
+        renderPanel(slides[idx], idx); refreshPreview();
+      });
+    };
+    r.readAsDataURL(file); input.value='';
+  };
+  input.click();
+}
+function clearNomeSlideImg(idx, field) {
+  slides[idx].data[field] = null;
+  renderPanel(slides[idx], idx); refreshPreview();
 }
 function setMethodologyStep(idx, step) {
   slides[idx].data.activeStep = step;
@@ -3023,6 +3136,8 @@ function applyProjectTypeVisibility(type) {
   // Save condicaohistorica text before removing naming slides
   const _savedCondicaoText = (slides.find(s => s.type === 'condicaohistorica')?.data?.text) || '';
   // Also remove any previously added naming-specific slides
+  // Save teaser/apres data before removing
+  const _savedTeasers = slides.filter(s => s.type === 'nomeTeaser' || s.type === 'nomeApres').map(s => JSON.parse(JSON.stringify(s)));
   slides = slides.filter(s => s._namingOnly !== true);
 
   if (type === 'naming') {
@@ -3081,7 +3196,11 @@ function applyProjectTypeVisibility(type) {
       const _savedSinRows = _existingSinaleira ? JSON.parse(JSON.stringify(_existingSinaleira.data.rows||{})) : {};
       const sineiraSlide = { ...dc(DEFAULTS.sinaleira), _namingOnly: true, data: { rows: _savedSinRows } };
       const finalistasSlide = { ...dc(DEFAULTS.finalistas), _namingOnly: true };
+      // Restore previously created teaser/apres slides
+      _savedTeasers.forEach(s => { s._namingOnly = true; });
       slides.splice(brandPos + 1, 0, meth6);
+      // Re-insert saved teaser/apres after meth6
+      _savedTeasers.slice().reverse().forEach(s => slides.splice(brandPos + 2, 0, s));
       slides.splice(brandPos + 1, 0, finalistasSlide);
       slides.splice(brandPos + 1, 0, meth5);
       slides.splice(brandPos + 1, 0, sineiraSlide);
@@ -3926,15 +4045,86 @@ function setSinText(slideIdx, name, field, val) {
   if (!s.data.rows) s.data.rows = {};
   if (!s.data.rows[name]) s.data.rows[name] = {};
   s.data.rows[name][field+'Text'] = val;
+  // Sync to nomeApres slide if exists
+  const na = slides.find(ss => ss.type === 'nomeApres' && ss.data.nome === name);
+  if (na) {
+    if (field === 'combr') na.data.combr = val;
+    if (field === 'status') na.data.status = val;
+  }
   refreshPreview();
 }
 function setSinColor(slideIdx, name, field, color) {
   const s = slides[slideIdx]; if (!s) return;
   if (!s.data.rows) s.data.rows = {};
   if (!s.data.rows[name]) s.data.rows[name] = {};
-  // Toggle off if same color
   s.data.rows[name][field+'Color'] = s.data.rows[name][field+'Color'] === color ? '' : color;
   renderPanel(s, slideIdx);
+  refreshPreview();
+}
+function toggleNomeSelected(slideIdx, name, selected) {
+  const s = slides[slideIdx]; if (!s) return;
+  if (!s.data.rows) s.data.rows = {};
+  if (!s.data.rows[name]) s.data.rows[name] = {};
+  // Safety: warn before deleting slides
+  if (!selected && s.data.rows[name].selected) {
+    showConfirm(
+      'Desmarcar "' + name + '" irá deletar os slides de Teaser e Apresentação. Deseja continuar?',
+      () => _doToggleNome(slideIdx, name, false),
+      () => renderPanel(s, slideIdx)
+    );
+    return;
+  }
+  _doToggleNome(slideIdx, name, selected);
+}
+
+function showConfirm(msg, onYes, onNo) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = '<div style="background:#fff;border-radius:12px;padding:32px;max-width:420px;font-family:Inter,sans-serif;">' +
+    '<div style="font-size:15px;color:#0A0A0A;line-height:1.5;margin-bottom:24px;">' + msg + '</div>' +
+    '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+    '<button id="confirmNo" style="padding:8px 20px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;">Cancelar</button>' +
+    '<button id="confirmYes" style="padding:8px 20px;border:none;border-radius:6px;background:#D45A3A;color:#fff;cursor:pointer;font-size:13px;">Deletar slides</button>' +
+    '</div></div>';
+  document.body.appendChild(overlay);
+  overlay.querySelector('#confirmYes').onclick = () => { document.body.removeChild(overlay); onYes(); };
+  overlay.querySelector('#confirmNo').onclick = () => { document.body.removeChild(overlay); if(onNo) onNo(); };
+}
+
+function _doToggleNome(slideIdx, name, selected) {
+  const s = slides[slideIdx]; if (!s) return;
+  s.data.rows[name].selected = selected;
+
+  if (selected) {
+    // Count existing nomeApres slides to get opção number
+    const existing = slides.filter(ss => ss.type === 'nomeApres');
+    const num = String(existing.length + 1).padStart(2, '0');
+    const row = s.data.rows[name];
+    // Find insertion point: after last nomeApres or after finalistasSlide
+    let insertAfter = slides.findIndex(ss => ss.type === 'finalistas');
+    slides.forEach((ss, i) => { if (ss.type === 'nomeTeaser' || ss.type === 'nomeApres') insertAfter = i; });
+    const teaser = { ...dc(DEFAULTS.nomeTeaser), name: 'Teaser — ' + name, _namingOnly: true, data: { image: null, frase: '', num } };
+    const apres = { ...dc(DEFAULTS.nomeApres), name: 'Apresentação — ' + name, _namingOnly: true,
+      data: { num, nome: name, significado: '', positivos: '', combr: row.combrText||'', status: row.statusText||'' } };
+    slides.splice(insertAfter + 1, 0, teaser);
+    slides.splice(insertAfter + 2, 0, apres);
+  } else {
+    // Remove teaser and apres for this name
+    for (let i = slides.length - 1; i >= 0; i--) {
+      if ((slides[i].type === 'nomeTeaser' || slides[i].type === 'nomeApres') && slides[i].name.endsWith('— ' + name)) {
+        slides.splice(i, 1);
+      }
+    }
+    // Renumber remaining nomeApres and nomeTeaser
+    let n = 1;
+    slides.forEach(ss => {
+      if (ss.type === 'nomeApres') { ss.data.num = String(n).padStart(2,'0'); n++; }
+      if (ss.type === 'nomeTeaser') { ss.data.num = String(n).padStart(2,'0'); }
+    });
+  }
+  recomputeSubcoverNumbers();
+  renderThumbList();
+  selectViewSlide(activeViewIdx);
   refreshPreview();
 }
 
